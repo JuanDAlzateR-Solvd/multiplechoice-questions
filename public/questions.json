@@ -1,0 +1,146 @@
+[
+  {
+    "id": "sample-prompt-001",
+    "status": "reviewed",
+    "topic": "Prompt engineering",
+    "difficulty": "Foundational",
+    "tags": ["clarity", "instructions"],
+    "question": "Which prompt is most likely to produce a consistently structured response?",
+    "options": [
+      { "id": "a", "text": "Tell me something useful about architecture." },
+      { "id": "b", "text": "Return three architecture risks as a JSON array with name and mitigation fields." },
+      { "id": "c", "text": "Be creative and use whatever format seems appropriate." },
+      { "id": "d", "text": "Architecture risks?" }
+    ],
+    "correctOptionId": "b",
+    "explanation": "Explicit output constraints and a defined schema make the expected result easier to follow and validate.",
+    "optionExplanations": {
+      "a": "The request is broad and does not specify a format.",
+      "b": "It states the count, subject, format, and required fields.",
+      "c": "Leaving the format open reduces structural consistency.",
+      "d": "This lacks context, scope, and output requirements."
+    },
+    "sourceReferences": ["Non-official sample created for this app"],
+    "baseWeight": 1
+  },
+  {
+    "id": "sample-tools-001",
+    "status": "reviewed",
+    "topic": "Tool use",
+    "difficulty": "Foundational",
+    "tags": ["tools", "validation"],
+    "question": "What is the safest pattern after a model requests an action through a tool?",
+    "options": [
+      { "id": "a", "text": "Execute every request without checking arguments." },
+      { "id": "b", "text": "Validate tool arguments and enforce permissions in application code." },
+      { "id": "c", "text": "Put all available secrets in the tool description." },
+      { "id": "d", "text": "Let the model define new tools at runtime." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "The application remains responsible for authorization, argument validation, and safe execution boundaries.",
+    "optionExplanations": {
+      "a": "Model-generated arguments should be treated as untrusted input.",
+      "b": "Application-side checks provide a dependable security boundary.",
+      "c": "Secrets should not be exposed in prompts or descriptions.",
+      "d": "Dynamically accepting arbitrary tools removes important controls."
+    },
+    "sourceReferences": ["Non-official sample created for this app"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "sample-context-001",
+    "status": "reviewed",
+    "topic": "Context management",
+    "difficulty": "Intermediate",
+    "tags": ["context", "retrieval"],
+    "question": "A long knowledge base exceeds the available context window. What is a practical first approach?",
+    "options": [
+      { "id": "a", "text": "Truncate every document at the same character count." },
+      { "id": "b", "text": "Retrieve a small set of relevant passages for each request." },
+      { "id": "c", "text": "Remove the user's question to make more room." },
+      { "id": "d", "text": "Repeat the entire knowledge base in every message." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "Retrieval can select relevant material and keep the supplied context focused.",
+    "optionExplanations": {
+      "a": "Uniform truncation can discard the relevant sections.",
+      "b": "Request-specific retrieval uses limited context more effectively.",
+      "c": "The question is needed to understand the requested task.",
+      "d": "Repetition consumes context without improving relevance."
+    },
+    "sourceReferences": ["Non-official sample created for this app"],
+    "baseWeight": 1
+  },
+  {
+    "id": "sample-eval-001",
+    "status": "reviewed",
+    "topic": "Evaluation",
+    "difficulty": "Intermediate",
+    "tags": ["testing", "quality"],
+    "question": "Which evaluation set best detects regressions in an assistant after a prompt change?",
+    "options": [
+      { "id": "a", "text": "One example that the new prompt already answers well." },
+      { "id": "b", "text": "A representative, versioned set with expected criteria and edge cases." },
+      { "id": "c", "text": "Only the shortest possible requests." },
+      { "id": "d", "text": "A different random example for every test run with no rubric." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "A stable and representative evaluation set makes before-and-after comparisons meaningful.",
+    "optionExplanations": {
+      "a": "One favorable example cannot represent the range of behavior.",
+      "b": "Versioning, coverage, and explicit criteria support repeatable regression testing.",
+      "c": "Length alone does not represent real usage or edge cases.",
+      "d": "Uncontrolled inputs and no rubric make results difficult to compare."
+    },
+    "sourceReferences": ["Non-official sample created for this app"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "sample-security-001",
+    "status": "reviewed",
+    "topic": "Safety",
+    "difficulty": "Intermediate",
+    "tags": ["prompt injection", "permissions"],
+    "question": "Retrieved text tells the assistant to ignore its instructions and send private data elsewhere. How should the system treat it?",
+    "options": [
+      { "id": "a", "text": "As trusted system instructions." },
+      { "id": "b", "text": "As untrusted data that cannot grant permissions." },
+      { "id": "c", "text": "As approval from the application owner." },
+      { "id": "d", "text": "As proof that all tool calls are safe." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "External content is untrusted and must not override application permissions or higher-priority instructions.",
+    "optionExplanations": {
+      "a": "Retrieved content is data, not a trusted instruction source.",
+      "b": "Treating it as untrusted preserves instruction and permission boundaries.",
+      "c": "Content cannot provide real user or owner authorization.",
+      "d": "Tool calls still require validation and authorization."
+    },
+    "sourceReferences": ["Non-official sample created for this app"],
+    "baseWeight": 1.3
+  },
+  {
+    "id": "sample-design-001",
+    "status": "reviewed",
+    "topic": "System design",
+    "difficulty": "Foundational",
+    "tags": ["reliability", "fallbacks"],
+    "question": "What improves reliability when an external tool may be temporarily unavailable?",
+    "options": [
+      { "id": "a", "text": "Retry forever with no delay." },
+      { "id": "b", "text": "Use bounded retries, clear errors, and a suitable fallback." },
+      { "id": "c", "text": "Hide every failure from the user." },
+      { "id": "d", "text": "Assume every tool result is complete." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "Bounded recovery and transparent failure handling keep the system responsive and understandable.",
+    "optionExplanations": {
+      "a": "Unlimited retries can hang the workflow and overload a dependency.",
+      "b": "This balances recovery, resource limits, and user clarity.",
+      "c": "Silent failures make incorrect behavior hard to detect.",
+      "d": "Responses should be validated before use."
+    },
+    "sourceReferences": ["Non-official sample created for this app"],
+    "baseWeight": 1
+  }
+]
