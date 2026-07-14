@@ -20,7 +20,7 @@ export function createApp(root: HTMLElement, questions: Question[], initialProgr
     const topics = [...new Set(questions.filter((q) => q.status === 'reviewed').map((q) => q.topic))].sort();
     const answered = Object.values(progress.questions).reduce((sum, item) => sum + item.timesCorrect + item.timesIncorrect, 0);
     root.innerHTML = `
-      <header class="hero"><span class="eyebrow">PERSONAL STUDY TOOL</span><h1>Architect Practice</h1><p>Short, focused practice for Claude Certified Architect – Foundations.</p></header>
+      <header class="hero"><span class="eyebrow">JUAN D. ALZATE'S PERSONAL STUDY TOOL</span><h1>Architect Practice</h1><p>Short, focused practice for Claude Certified Architect – Foundations.</p></header>
       <section class="card"><h2>Start a session</h2><div class="actions">
         <button data-count="5">Quick 5 <span>About 5 minutes</span></button>
         <button data-count="10">Quick 10 <span>Build your streak</span></button>
