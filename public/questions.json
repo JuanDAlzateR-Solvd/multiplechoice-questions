@@ -142,5 +142,485 @@
     },
     "sourceReferences": ["Non-official sample created for this app"],
     "baseWeight": 1
+  },
+  {
+    "id": "agentic-arch-001",
+    "status": "reviewed",
+    "topic": "Agentic architecture & orchestration",
+    "difficulty": "Foundational",
+    "tags": ["agent-loop", "tool-use"],
+    "question": "An agent loop sends a request, and the model's response includes tool_use blocks with stop_reason \"tool_use\". What should the application do next?",
+    "options": [
+      { "id": "a", "text": "Execute the requested tools and return matching tool_result blocks in the next turn, then continue the loop." },
+      { "id": "b", "text": "Stop the loop because the model has produced enough text." },
+      { "id": "c", "text": "Ask the user to manually approve the wording of the assistant's message." },
+      { "id": "d", "text": "Ignore the tool_use blocks and re-prompt the model for a plain-text answer." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "A stop_reason of tool_use means the model expects the requested tools to be executed before it can continue; the loop only advances correctly once every tool_use block receives a matching tool_result.",
+    "optionExplanations": {
+      "a": "This follows the loop contract: execute what was requested and feed the results back so the model can continue.",
+      "b": "stop_reason: tool_use signals the turn is incomplete, not that the task is finished.",
+      "c": "Approving wording does not supply the tool results the model is waiting on.",
+      "d": "Skipping the requested tools breaks the loop and leaves the model without the information it asked for."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/agents-and-tools/tool-use/how-tool-use-works"],
+    "baseWeight": 1
+  },
+  {
+    "id": "agentic-arch-002",
+    "status": "reviewed",
+    "topic": "Agentic architecture & orchestration",
+    "difficulty": "Foundational",
+    "tags": ["agent-loop", "tool-use"],
+    "question": "A model turn requests three tool calls in one response. The application successfully executes two, and the third tool times out. What must the next turn include for the loop to continue correctly?",
+    "options": [
+      { "id": "a", "text": "Only the two successful tool_result blocks, omitting the failed call entirely." },
+      { "id": "b", "text": "A tool_result block for all three tool_use ids, including an error result for the timed-out call." },
+      { "id": "c", "text": "A single combined tool_result block summarizing all three outcomes." },
+      { "id": "d", "text": "A brand-new user message describing the failure in plain text instead of tool_result blocks." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "Every tool_use block issued in a turn needs a matching tool_result with the same id, including calls that failed, so the model has complete and accurate state to reason about next.",
+    "optionExplanations": {
+      "a": "Omitting a tool_use id leaves the model without a result for a call it is still waiting on.",
+      "b": "Matching every id, including a clear error for the failed call, keeps the loop state accurate.",
+      "c": "Combining results into one block breaks the one-to-one id matching the loop depends on.",
+      "d": "Plain text cannot substitute for a properly matched tool_result block in the loop structure."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/agents-and-tools/tool-use/handle-tool-calls"],
+    "baseWeight": 1
+  },
+  {
+    "id": "agentic-arch-003",
+    "status": "reviewed",
+    "topic": "Agentic architecture & orchestration",
+    "difficulty": "Foundational",
+    "tags": ["agent-loop", "architecture-choice"],
+    "question": "A support workflow must handle open-ended troubleshooting requests that vary widely between customers. Which approach best reflects model-driven tool selection rather than a fixed decision tree?",
+    "options": [
+      { "id": "a", "text": "A rigid if/else script that maps each customer keyword to one predetermined tool call." },
+      { "id": "b", "text": "A form the customer fills out that always calls the same three tools in the same sequence." },
+      { "id": "c", "text": "Giving the model a set of tools with descriptions and letting it choose which to call and in what order based on the conversation." },
+      { "id": "d", "text": "Precomputing the full list of tool calls before the conversation starts and replaying it regardless of the model's replies." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "Model-driven tool selection means the model itself decides which available tools to call, and in what order, based on the current conversation, rather than following a script fixed in advance.",
+    "optionExplanations": {
+      "a": "Mapping keywords to fixed calls is a predetermined decision tree, not model-driven selection.",
+      "b": "A fixed three-tool sequence is a scripted pipeline regardless of what the model observes.",
+      "c": "This lets the model choose its own tools and order based on what the conversation actually needs.",
+      "d": "Precomputing calls ignores the model's ability to adapt to what it learns during the conversation."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/agents-and-tools/tool-use/how-tool-use-works"],
+    "baseWeight": 1
+  },
+  {
+    "id": "agentic-arch-004",
+    "status": "reviewed",
+    "topic": "Agentic architecture & orchestration",
+    "difficulty": "Foundational",
+    "tags": ["subagents", "context-handoff"],
+    "question": "A coordinator delegates a research subtask to a subagent. The subagent's response omits key constraints the user mentioned earlier in the parent conversation. What is the most likely cause?",
+    "options": [
+      { "id": "a", "text": "The subagent ignored explicit instructions in its prompt." },
+      { "id": "b", "text": "The model's context window is too small to hold any instructions." },
+      { "id": "c", "text": "Subagents cannot process constraints under any circumstances." },
+      { "id": "d", "text": "The coordinator did not pass those constraints into the subagent's task prompt, and the subagent does not automatically see the parent conversation." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "A subagent only knows what its task prompt explicitly provides; it does not automatically inherit the parent conversation's full history, so missing constraints usually trace back to an incomplete handoff.",
+    "optionExplanations": {
+      "a": "Nothing suggests the subagent disobeyed instructions it was actually given.",
+      "b": "A small context window would affect all instructions, not selectively drop constraints the coordinator never sent.",
+      "c": "Subagents can process constraints when they are explicitly included in the delegated task.",
+      "d": "This matches the common failure mode: assuming shared memory instead of passing context explicitly."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/sub-agents"],
+    "baseWeight": 1
+  },
+  {
+    "id": "agentic-arch-005",
+    "status": "reviewed",
+    "topic": "Agentic architecture & orchestration",
+    "difficulty": "Foundational",
+    "tags": ["architecture-choice", "workflow"],
+    "question": "A task always executes the same three steps in the same order, with no branching or re-selection of tools based on intermediate results. Which architecture best fits this task?",
+    "options": [
+      { "id": "a", "text": "A fixed prompt chain that runs the three steps in sequence." },
+      { "id": "b", "text": "A multi-agent coordinator with dynamic delegation." },
+      { "id": "c", "text": "An open-ended agent loop with unrestricted tool access." },
+      { "id": "d", "text": "A subagent architecture with parallel specialists." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "When a task's steps and order are fully predictable and never branch, a fixed prompt chain is simpler and sufficient; agentic loops and coordinator patterns add complexity meant for adaptive or delegated work.",
+    "optionExplanations": {
+      "a": "A fixed sequence of predictable steps is exactly what a prompt chain is designed for.",
+      "b": "Dynamic delegation adds coordination overhead the task does not need.",
+      "c": "Unrestricted tool access and open-ended looping are unnecessary when the steps never change.",
+      "d": "Parallel specialists solve independent subtasks, not a single fixed sequential process."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/agents-and-tools/tool-use/how-tool-use-works"],
+    "baseWeight": 1
+  },
+  {
+    "id": "agentic-arch-006",
+    "status": "reviewed",
+    "topic": "Agentic architecture & orchestration",
+    "difficulty": "Foundational",
+    "tags": ["architecture-choice"],
+    "question": "A single, well-defined task requires exactly one tool call and no decomposition or delegation. What is the most appropriate architecture?",
+    "options": [
+      { "id": "a", "text": "A coordinator that delegates to three specialist subagents." },
+      { "id": "b", "text": "A single agent that calls the one needed tool directly." },
+      { "id": "c", "text": "A fixed pipeline of five sequential subagents." },
+      { "id": "d", "text": "A recovery-escalation hierarchy with a fallback coordinator." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "A simple, single-tool task needs neither delegation nor decomposition; introducing subagents or a coordinator only adds unnecessary coordination overhead.",
+    "optionExplanations": {
+      "a": "Delegating to three subagents is unnecessary overhead for one well-defined tool call.",
+      "b": "A single agent directly calling the one needed tool matches the task's actual complexity.",
+      "c": "A five-stage pipeline is far more structure than a one-step task requires.",
+      "d": "Recovery-escalation machinery is only useful once there is delegated work that can fail."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/sub-agents"],
+    "baseWeight": 1
+  },
+  {
+    "id": "agentic-arch-007",
+    "status": "reviewed",
+    "topic": "Agentic architecture & orchestration",
+    "difficulty": "Intermediate",
+    "tags": ["decomposition", "workflow"],
+    "question": "A workflow must always extract data, then transform it, then load it into a report, in that exact order, with no need to branch based on findings. Which decomposition strategy fits best?",
+    "options": [
+      { "id": "a", "text": "Adaptive decomposition that lets the model decide the number and order of stages." },
+      { "id": "b", "text": "A single subagent handling all three stages with no defined boundaries." },
+      { "id": "c", "text": "Fixed sequential decomposition with dedicated steps for extract, transform, and load." },
+      { "id": "d", "text": "Parallel decomposition where all three stages run at the same time." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "Predictable, dependency-ordered stages, where each stage needs the previous one's output, call for fixed sequential decomposition rather than adaptive or parallel strategies.",
+    "optionExplanations": {
+      "a": "Letting the model decide stage order adds unpredictability the task doesn't need.",
+      "b": "A single undifferentiated stage loses the clear boundaries the pipeline depends on for correctness.",
+      "c": "Fixed, ordered stages match a pipeline where each step depends on the previous step's output.",
+      "d": "Load depends on transform, which depends on extract, so the stages cannot run in parallel."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/sub-agents"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "agentic-arch-008",
+    "status": "reviewed",
+    "topic": "Agentic architecture & orchestration",
+    "difficulty": "Intermediate",
+    "tags": ["decomposition"],
+    "question": "An investigation must uncover unknown related issues across a large codebase, and the number and order of subtasks cannot be predicted in advance. Which decomposition approach fits best?",
+    "options": [
+      { "id": "a", "text": "Fixed sequential decomposition with a preset number of stages." },
+      { "id": "b", "text": "A single fixed prompt with no delegation." },
+      { "id": "c", "text": "Parallel decomposition into a predetermined, unchanging set of subagents." },
+      { "id": "d", "text": "Adaptive decomposition where the agent determines follow-up subtasks based on intermediate findings." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "Open-ended investigations benefit from adaptive decomposition, where each finding can spawn new, previously unplanned subtasks, rather than a decomposition fixed before the work starts.",
+    "optionExplanations": {
+      "a": "A preset stage count cannot accommodate subtasks that only become apparent during the investigation.",
+      "b": "A single fixed prompt cannot scale to cover unpredictable follow-up work.",
+      "c": "A predetermined, unchanging set of subagents cannot react to what the investigation actually uncovers.",
+      "d": "Adaptive decomposition lets new subtasks emerge from what earlier steps find."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/sub-agents"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "agentic-arch-009",
+    "status": "reviewed",
+    "topic": "Agentic architecture & orchestration",
+    "difficulty": "Intermediate",
+    "tags": ["subagents", "context-handoff"],
+    "question": "A coordinator delegates a billing-dispute investigation to a subagent. What is the best practice for the information the coordinator provides?",
+    "options": [
+      { "id": "a", "text": "Pass only the specific facts, constraints, and goal the subagent needs, explicitly stated in its task prompt." },
+      { "id": "b", "text": "Pass the subagent the full parent conversation transcript so it can decide what's relevant." },
+      { "id": "c", "text": "Pass nothing and let the subagent ask the parent for clarification mid-task." },
+      { "id": "d", "text": "Pass a single-word category label and let the subagent infer everything else." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "Delegation works best when the coordinator explicitly scopes the context a subagent receives to what that subtask actually needs, rather than relying on the subagent to filter a full transcript or infer missing details.",
+    "optionExplanations": {
+      "a": "Explicit, scoped context gives the subagent exactly what it needs without irrelevant or missing information.",
+      "b": "Handing over the entire transcript pushes the filtering work onto the subagent and can leak unrelated context.",
+      "c": "Passing nothing forces guesswork or mid-task clarification the delegation should have avoided.",
+      "d": "A single label is too little information for the subagent to act on reliably."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/sub-agents"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "agentic-arch-010",
+    "status": "reviewed",
+    "topic": "Agentic architecture & orchestration",
+    "difficulty": "Intermediate",
+    "tags": ["subagents", "context-handoff"],
+    "question": "A subagent researches multiple documents and returns a synthesized summary to the coordinator, which will cite claims back to their original sources. What must the handoff preserve?",
+    "options": [
+      { "id": "a", "text": "Only the final synthesized text, since sources are not needed once summarized." },
+      { "id": "b", "text": "A mapping from each claim in the summary back to the document or passage it came from." },
+      { "id": "c", "text": "The raw byte size of each source document." },
+      { "id": "d", "text": "The subagent's internal reasoning trace with no reference to sources." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "When downstream work needs to cite claims, the handoff must preserve content-to-source metadata so each claim can be traced back to where it came from; losing that mapping makes accurate citation impossible.",
+    "optionExplanations": {
+      "a": "Dropping source references makes it impossible to cite claims accurately afterward.",
+      "b": "Preserving the claim-to-source mapping is exactly what accurate downstream citation requires.",
+      "c": "Document size has no bearing on which source supports which claim.",
+      "d": "A reasoning trace without source references still can't support accurate citation."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/sub-agents"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "agentic-arch-011",
+    "status": "reviewed",
+    "topic": "Agentic architecture & orchestration",
+    "difficulty": "Intermediate",
+    "tags": ["delegation", "parallelism"],
+    "question": "A coordinator must gather independent pricing quotes from three unrelated vendors, and none of the three depends on another's result. Which delegation strategy minimizes latency without adding unnecessary coordination risk?",
+    "options": [
+      { "id": "a", "text": "Delegate to the three subagents sequentially, waiting for each to finish before starting the next." },
+      { "id": "b", "text": "Merge all three vendor lookups into a single subagent call with no isolation." },
+      { "id": "c", "text": "Delegate to the three subagents in parallel, since their tasks are independent." },
+      { "id": "d", "text": "Delegate to one subagent and have it delegate to the other two, one at a time." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "Independent subtasks with no dependency between them are good candidates for parallel delegation, which reduces total latency without introducing the coordination risk that sequential or nested delegation would add unnecessarily.",
+    "optionExplanations": {
+      "a": "Sequential delegation adds needless latency when the three lookups don't depend on each other.",
+      "b": "Merging independent lookups into one call removes the isolation that makes failures easier to attribute and recover from.",
+      "c": "Parallel delegation is appropriate here because the three vendor lookups are fully independent.",
+      "d": "Chaining delegation through an extra subagent adds latency and complexity with no benefit for independent tasks."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/sub-agents"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "agentic-arch-012",
+    "status": "reviewed",
+    "topic": "Agentic architecture & orchestration",
+    "difficulty": "Intermediate",
+    "tags": ["tool-use", "normalization"],
+    "question": "A coordinator receives results from a database tool (structured JSON rows) and a document search tool (raw unstructured text), and both must feed into one downstream reasoning step. What should happen before that reasoning step?",
+    "options": [
+      { "id": "a", "text": "Pass both results directly to the reasoning step in their original, different formats." },
+      { "id": "b", "text": "Discard whichever result is not already valid JSON." },
+      { "id": "c", "text": "Concatenate both raw outputs into one string with no structure." },
+      { "id": "d", "text": "Normalize both results into a consistent shared format before the reasoning step consumes them." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "Heterogeneous tool results should be normalized into a consistent shared format before a single downstream reasoning step consumes them, so that step can reason over comparable data rather than reconciling mismatched formats itself.",
+    "optionExplanations": {
+      "a": "Leaving formats mismatched pushes reconciliation work into the reasoning step, increasing the chance of errors.",
+      "b": "Discarding the unstructured result throws away valid information just because of its format.",
+      "c": "Unstructured concatenation loses the distinctions between the two result types.",
+      "d": "Normalizing to a shared format lets the reasoning step compare and combine both results reliably."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/agents-and-tools/tool-use/handle-tool-calls"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "agentic-arch-013",
+    "status": "reviewed",
+    "topic": "Agentic architecture & orchestration",
+    "difficulty": "Intermediate",
+    "tags": ["delegation", "subagents"],
+    "question": "A coordinator has specialist subagents for billing, shipping, and returns. A customer asks only about a shipping delay. What is the best delegation approach?",
+    "options": [
+      { "id": "a", "text": "Send the request only to the shipping specialist, since it is the relevant one." },
+      { "id": "b", "text": "Send the request to all three specialists and merge their responses." },
+      { "id": "c", "text": "Always start with the billing specialist regardless of topic." },
+      { "id": "d", "text": "Skip delegation and have the coordinator answer directly without any specialist." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "Targeted delegation to the relevant specialist keeps the response accurate and efficient; routing every request through every specialist wastes resources and risks conflicting or irrelevant input from specialists with no relevant expertise.",
+    "optionExplanations": {
+      "a": "Routing to the specialist whose expertise matches the request is the point of having specialists.",
+      "b": "Involving unrelated specialists adds cost and risks irrelevant or conflicting input.",
+      "c": "Starting with an unrelated specialist regardless of topic ignores what the request actually needs.",
+      "d": "Bypassing the specialist loses the shipping-specific expertise the coordinator pattern exists to provide."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/sub-agents"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "agentic-arch-014",
+    "status": "reviewed",
+    "topic": "Agentic architecture & orchestration",
+    "difficulty": "Intermediate",
+    "tags": ["subagents", "least-privilege"],
+    "question": "A coordinator delegates a read-only reporting task to a subagent. Which tool access configuration best follows least-privilege delegation?",
+    "options": [
+      { "id": "a", "text": "Grant the subagent every tool available to the coordinator, in case it is needed later." },
+      { "id": "b", "text": "Grant the subagent only the read/query tools required for the reporting task." },
+      { "id": "c", "text": "Grant the subagent write and delete access so it never has to ask for more permissions." },
+      { "id": "d", "text": "Grant the subagent no tools and require the coordinator to execute every call on its behalf." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "Least-privilege delegation scopes a subagent's tool access to exactly what its task requires; a read-only reporting task needs read/query tools and nothing more, avoiding both over-permissioning and defeating the purpose of delegation.",
+    "optionExplanations": {
+      "a": "Granting every tool contradicts least privilege by exposing capabilities the reporting task never needs.",
+      "b": "Scoping access to the read/query tools the task actually requires matches least-privilege delegation.",
+      "c": "Write and delete access is unnecessary and risky for a task that only reads and reports data.",
+      "d": "Withholding all tools forces the coordinator to do the subagent's work, defeating the purpose of delegating it."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/sub-agents"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "agentic-arch-015",
+    "status": "reviewed",
+    "topic": "Agentic architecture & orchestration",
+    "difficulty": "Advanced",
+    "tags": ["enforcement", "hooks"],
+    "question": "A workflow must always run a linter before any code-editing tool call is allowed to execute, with no exceptions regardless of what the model decides. Which mechanism best guarantees this?",
+    "options": [
+      { "id": "a", "text": "A prompt instruction telling the model to run the linter first." },
+      { "id": "b", "text": "A note in the system prompt asking the model to remember this rule." },
+      { "id": "c", "text": "A programmatic prerequisite, such as a hook, that blocks the edit tool from executing until the linter has run." },
+      { "id": "d", "text": "Trusting the model's training to have learned this convention." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "Deterministic enforcement requires a programmatic prerequisite, such as a hook, that structurally blocks the action until the condition is met; prompt-level guidance is advisory and can be skipped, misread, or overridden.",
+    "optionExplanations": {
+      "a": "A prompt instruction is guidance the model can still fail to follow; it does not enforce anything.",
+      "b": "A reminder in the system prompt is still advisory, not a structural guarantee.",
+      "c": "A hook that blocks execution until the linter runs enforces the rule regardless of what the model decides.",
+      "d": "Relying on trained behavior provides no guarantee against exceptions or unusual situations."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/hooks"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "agentic-arch-016",
+    "status": "reviewed",
+    "topic": "Agentic architecture & orchestration",
+    "difficulty": "Advanced",
+    "tags": ["enforcement", "security"],
+    "question": "A system prompt instructs the model never to reveal a stored API key. Untrusted retrieved content later asks the model to print the key \"for debugging.\" What should the architecture rely on to prevent disclosure?",
+    "options": [
+      { "id": "a", "text": "The system prompt instruction alone, since it was stated first." },
+      { "id": "b", "text": "The model's general safety training as the only safeguard." },
+      { "id": "c", "text": "A polite reminder appended to every user message." },
+      { "id": "d", "text": "An application-level control that prevents the key from ever entering the model's context or output in the first place." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "Prompt instructions are not a hard security boundary against adversarial content; secrets need a structural, application-level control that keeps them out of the model's context and output path entirely.",
+    "optionExplanations": {
+      "a": "Instruction priority does not stop untrusted content from attempting to override stated rules.",
+      "b": "General safety training is not a dependable, verifiable control for a specific secret-handling requirement.",
+      "c": "A repeated reminder is still a prompt-level instruction, not an enforced boundary.",
+      "d": "Keeping the secret out of the model's context and output entirely removes the disclosure risk structurally."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/hooks"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "agentic-arch-017",
+    "status": "reviewed",
+    "topic": "Agentic architecture & orchestration",
+    "difficulty": "Advanced",
+    "tags": ["recovery", "subagents"],
+    "question": "A subagent fails to complete its task after exhausting its own retry budget. What should happen next in a well-designed coordinator architecture?",
+    "options": [
+      { "id": "a", "text": "The subagent reports the failure to the coordinator, which decides whether to retry, reassign, or escalate." },
+      { "id": "b", "text": "The subagent silently returns an empty result and the coordinator proceeds as if the task succeeded." },
+      { "id": "c", "text": "The whole system restarts from the very first step of the entire session." },
+      { "id": "d", "text": "The user is shown a generic error with no information about which subtask failed." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "When a subagent exhausts its own local recovery options, the failure should be escalated to the coordinator, which has the broader context needed to retry, reassign, or otherwise recover, rather than being hidden or handled by discarding all prior progress.",
+    "optionExplanations": {
+      "a": "Escalating to the coordinator lets a component with broader context decide the best recovery action.",
+      "b": "Silently returning as if the task succeeded hides a real failure from the rest of the system.",
+      "c": "Restarting the entire session discards unrelated progress that had nothing to do with the failure.",
+      "d": "A generic error with no subtask information makes the failure harder to diagnose or recover from."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/sub-agents"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "agentic-arch-018",
+    "status": "reviewed",
+    "topic": "Agentic architecture & orchestration",
+    "difficulty": "Advanced",
+    "tags": ["session-management"],
+    "question": "A long-running session's prior plan depended on a data source that has since changed significantly, invalidating several earlier conclusions. What is the most appropriate way to continue?",
+    "options": [
+      { "id": "a", "text": "Resume the exact prior session state and continue as if nothing changed." },
+      { "id": "b", "text": "Start fresh with a structured summary that flags the outdated conclusions and incorporates the new information." },
+      { "id": "c", "text": "Fork the session silently without noting that anything changed." },
+      { "id": "d", "text": "Continue indefinitely appending to the same context without ever revisiting earlier conclusions." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "Resuming is appropriate only when prior state remains valid; once the underlying data has changed enough to invalidate earlier conclusions, starting fresh with a structured summary that flags what changed is safer than continuing to build on stale conclusions.",
+    "optionExplanations": {
+      "a": "Resuming as if nothing changed continues to build on conclusions that are now known to be invalid.",
+      "b": "A fresh start with a summary that flags the outdated conclusions avoids compounding decisions made on stale data.",
+      "c": "Forking without noting the change still leaves the invalid conclusions unaddressed.",
+      "d": "Never revisiting earlier conclusions lets known-invalid reasoning persist indefinitely."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/sub-agents"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "agentic-arch-019",
+    "status": "reviewed",
+    "topic": "Agentic architecture & orchestration",
+    "difficulty": "Advanced",
+    "tags": ["session-management"],
+    "question": "An agent resumes a previous session to continue a task. Since the last session, one of the facts the earlier plan relied on has changed. What must the resumed session do?",
+    "options": [
+      { "id": "a", "text": "Continue using the prior plan unchanged, since resuming implies the plan is still valid." },
+      { "id": "b", "text": "Avoid mentioning the change so the user isn't confused by new information." },
+      { "id": "c", "text": "Surface the changed fact and reassess any conclusions that depended on it before continuing." },
+      { "id": "d", "text": "Discard all prior context and start with no summary at all." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "Resuming a session must not assume prior state is still valid; any changed fact needs to be surfaced and its dependent conclusions reassessed, rather than silently carried forward or hidden from the user.",
+    "optionExplanations": {
+      "a": "Resuming does not guarantee the prior plan is still valid; a changed fact can undermine it.",
+      "b": "Hiding the change from the user prevents them from understanding why conclusions may differ.",
+      "c": "Surfacing the change and reassessing dependent conclusions keeps the resumed session accurate.",
+      "d": "Discarding all prior context with no summary throws away useful progress the resumed session didn't need to lose."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/sub-agents"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "agentic-arch-020",
+    "status": "reviewed",
+    "topic": "Agentic architecture & orchestration",
+    "difficulty": "Advanced",
+    "tags": ["decomposition", "recovery"],
+    "question": "A coordinator decomposed a broad compliance audit into subtasks by document type only, and each subagent reviewed its assigned document type in isolation. The final report misses a violation that only appears when comparing two different document types together. What is the most likely architectural cause?",
+    "options": [
+      { "id": "a", "text": "The subagents used the wrong tool for reading documents." },
+      { "id": "b", "text": "The coordinator failed to enforce a linter before merging results." },
+      { "id": "c", "text": "The session should have been resumed instead of started fresh." },
+      { "id": "d", "text": "The decomposition was too narrow, splitting the work in a way that lost cross-document coverage." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "Decomposing strictly by document type, with each subagent isolated to one type, loses coverage of violations that only emerge from comparing across types; the decomposition boundary itself, not tool choice or session handling, caused the gap.",
+    "optionExplanations": {
+      "a": "Nothing indicates the document-reading tool itself was the wrong choice.",
+      "b": "A linter is unrelated to a compliance violation that spans two document types.",
+      "c": "Session resume choice has no bearing on how the audit's subtasks were divided.",
+      "d": "Splitting strictly by document type prevented any subagent from seeing the cross-document comparison needed to catch the violation."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/sub-agents"],
+    "baseWeight": 1.2
   }
 ]
