@@ -9,6 +9,23 @@ Create original, source-supported practice content for the Claude Certified Arch
 
 Treat `$ARGUMENTS` and the user's message as the request. Apply the repository instructions and workflow below throughout the task.
 
+## Reference material
+
+This skill folder carries its own condensed reference material under `reference/`, separate from the full maintained guide in the repository:
+
+- [`reference/authoring-reference.md`](reference/authoring-reference.md) — a fast on-ramp cheat sheet covering how to use the exam guide, the domain taxonomy at a glance, non-negotiable quality requirements, rules against unsupported/unofficial claims, and the expected schema. It never overrides the full guide; use it to avoid re-reading all 561 lines on every invocation, then consult the full guide for anything non-trivial or volatile.
+- [`reference/example-questions.json`](reference/example-questions.json) — six original, schema-valid, `status: "draft"` example questions, one or two per domain, each annotated with the objective and misconception it targets. Use it as a shape/tone model. Never copy its items into `public/questions.json` verbatim; it is not application data and is not loaded by the app.
+
+The repository's full maintained guide, `docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md`, remains the primary source of truth for exam scope, taxonomy, and authoring rules. Treat both reference files above as summaries of that guide, not replacements for it.
+
+## Inputs, outputs, and completion
+
+**Inputs:** the user's message plus `$ARGUMENTS`, optionally specifying mode, count, domain/topic/subtopic, difficulty, question type, learning objective, language, or source constraint. See "Choose the mode" and "Resolve the request" below for how omitted values are defaulted.
+
+**Outputs:** exactly one of — validated questions appended to `public/questions.json` (Generate and Add), a set of proposed questions presented in-chat without file edits (Generate for Review), or a per-question findings report (Validate Existing Questions). See each mode's output section below for the required shape.
+
+**Completion criteria:** the task is done only when the chosen mode's output section has been satisfied, every generated or reviewed item has passed the "Validate before writing" and "Check duplication" checklists, any commands required for the mode have actually been run (not merely assumed), and the "Completion report" section below has been produced.
+
 ## Choose the mode
 
 Determine the mode from the user's wording before doing work:
@@ -24,12 +41,13 @@ If file modification is ambiguous, use Generate for Review. State the chosen mod
 Do not draft questions until you have inspected the current repository state.
 
 1. Read `AGENTS.md` and `CLAUDE.md` when present, plus any more specific repository instructions that apply.
-2. Locate the maintained certification question guide. In this repository it is currently `docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md`; if that path changes, search case-insensitively for a similarly named guide rather than assuming it is absent.
-3. Read the complete guide, especially its source hierarchy, verified blueprint, taxonomy, in/out-of-scope boundaries, question rules, schema mapping, quality checklist, source catalog, and verification gaps.
-4. Locate the live bank. In this repository it is currently `public/questions.json`; confirm that application code still loads that path.
-5. Read the complete bank and inspect representative questions relevant to the requested topic.
-6. Inspect the actual schema and validation sources, including `src/types.ts`, `src/questions/validation.ts`, relevant tests, `package.json`, and any JSON Schema or validation scripts that now exist.
-7. Inspect `git status` before editing. Preserve existing user changes and avoid unrelated files.
+2. Read this skill's own `reference/authoring-reference.md` for a condensed orientation to the domain taxonomy, quality bar, and schema.
+3. Locate the maintained certification question guide. In this repository it is currently `docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md`; if that path changes, search case-insensitively for a similarly named guide rather than assuming it is absent.
+4. Read the complete guide, especially its source hierarchy, verified blueprint, taxonomy, in/out-of-scope boundaries, question rules, schema mapping, quality checklist, source catalog, and verification gaps. The cheat sheet in step 2 is a summary, not a substitute for this file.
+5. Locate the live bank. In this repository it is currently `public/questions.json`; confirm that application code still loads that path.
+6. Read the complete bank and inspect representative questions relevant to the requested topic.
+7. Inspect the actual schema and validation sources, including `src/types.ts`, `src/questions/validation.ts`, relevant tests, `package.json`, and any JSON Schema or validation scripts that now exist.
+8. Inspect `git status` before editing. Preserve existing user changes and avoid unrelated files.
 
 The maintained guide is the repository source of truth for exam scope and authoring quality. The actual TypeScript types, validator, and bank are the source of truth for the current application schema. If they conflict, do not guess or change the schema: explain the conflict and stop before writing.
 
@@ -89,6 +107,8 @@ For each proposed question:
 8. Mark newly added questions `draft` unless the user explicitly requests a different supported status after review.
 
 Generated content is non-official practice material. Never label it official, authentic, recalled, leaked, proprietary, identical to, or representative of a specific protected exam item.
+
+Use `reference/example-questions.json` to calibrate tone, scenario depth, and explanation style before drafting — not as a source of content to reuse.
 
 ## Design answer options
 

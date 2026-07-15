@@ -1,0 +1,164 @@
+[
+  {
+    "id": "reference-agentic-loop-001",
+    "status": "draft",
+    "topic": "Agent loop control",
+    "difficulty": "Foundational",
+    "tags": ["agentic-architecture-orchestration", "stop-reason"],
+    "question": "An application is driving a client-tool loop against the Claude API. Which signal should it rely on to decide whether the loop should continue or the turn is complete?",
+    "options": [
+      { "id": "a", "text": "The API's stop_reason for the response, together with whether the response contains any tool_use content blocks." },
+      { "id": "b", "text": "Whether the assistant's text includes a phrase such as \"I am done\" or \"here is the final answer.\"" },
+      { "id": "c", "text": "A fixed number of loop iterations, regardless of what the response contains." },
+      { "id": "d", "text": "Whether the original user message happened to mention a tool by name." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "The client-tool loop is a structured contract: continue executing and returning tool_result blocks while the response calls for tool execution, and treat other outcomes according to the API's actual stop_reason and content. Natural-language phrasing is not a reliable termination signal because prose can claim completion, ambiguity, or continuation regardless of what the structured response actually contains.",
+    "optionExplanations": {
+      "a": "This is the documented mechanism: inspect stop_reason and the presence of tool_use blocks to know whether more tool execution is required before the turn can be considered complete.",
+      "b": "Assistant prose is not a controlled signal. A response could describe finishing while still containing a tool_use block requiring execution, or could omit any such phrase in a genuinely final answer.",
+      "c": "A fixed iteration count ignores the actual state of the response and will end the loop too early for a longer legitimate task or too late for a short one.",
+      "d": "Keyword matching in the original user request has no relationship to what the current response's stop_reason or content blocks actually indicate."
+    },
+    "sourceReferences": [
+      "https://platform.claude.com/docs/en/agents-and-tools/tool-use/how-tool-use-works — cited in docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md source catalog (accessed 2026-07-14)",
+      "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 1 — 'Agent loops and stop reasons'"
+    ],
+    "baseWeight": 1
+  },
+  {
+    "id": "reference-tool-error-001",
+    "status": "draft",
+    "topic": "Tool error design",
+    "difficulty": "Intermediate",
+    "tags": ["tool-design-mcp-integration", "error-handling"],
+    "question": "A tool currently returns the same generic message, \"Error: request failed,\" whether the underlying cause is a request timeout, invalid arguments, a permission denial, or a search that legitimately matched zero records. Agents calling the tool frequently retry permission failures and misreport empty results as errors. What is the best fix?",
+    "options": [
+      { "id": "a", "text": "Keep a single generic error message so the tool interface stays simple for callers." },
+      { "id": "b", "text": "Differentiate the outcome types (transient, validation, permission, and valid-empty-result) and return whether the failure is retryable plus enough context for the agent to choose a recovery path." },
+      { "id": "c", "text": "Remove structured error handling and let the underlying exception propagate to the agent unmodified." },
+      { "id": "d", "text": "Log the distinguishing detail server-side only, and continue returning the same generic message to the agent." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "Tool responses should help the agent choose among retrying, correcting input, selecting an alternative, or escalating. Collapsing transient failures, validation errors, permission denials, and valid empty results into one message removes exactly the information the agent needs to make that choice, which produces both the observed wasted retries and the false empty-result reports.",
+    "optionExplanations": {
+      "a": "Simplicity does not offset the cost: the agent cannot tell a retryable timeout from a permission denial it should not retry, or from a search that correctly found nothing.",
+      "b": "This directly resolves both symptoms: retryability tells the agent whether to retry, and a distinct empty-result outcome stops it from treating zero matches as a failure.",
+      "c": "Raw, unclassified exceptions are even less actionable for an agent than the current generic message, and expose internal implementation detail without adding recovery guidance.",
+      "d": "Server-side logging helps operators but does nothing for the agent deciding what to do next in the same turn; the caller still receives no actionable distinction."
+    },
+    "sourceReferences": [
+      "https://platform.claude.com/docs/en/agents-and-tools/tool-use/troubleshooting-tool-use — cited in docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md source catalog (accessed 2026-07-14)",
+      "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 2 — tool and error-response design"
+    ],
+    "baseWeight": 1
+  },
+  {
+    "id": "reference-claude-md-scope-001",
+    "status": "draft",
+    "topic": "CLAUDE.md scope",
+    "difficulty": "Foundational",
+    "tags": ["claude-code-configuration-workflows", "configuration-scope"],
+    "question": "A team wants every engineer using Claude Code on a shared repository to automatically follow the same coding conventions, without each person taking a manual setup step. One engineer currently keeps those conventions only in their personal user-level CLAUDE.md file. Where should the conventions be placed instead?",
+    "options": [
+      { "id": "a", "text": "In each engineer's personal user-scope CLAUDE.md file, copied individually." },
+      { "id": "b", "text": "In a one-time chat message the engineer sends to the rest of the team." },
+      { "id": "c", "text": "In a project-scoped CLAUDE.md committed to the repository." },
+      { "id": "d", "text": "As a code comment inside one frequently edited file." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "Project-scoped configuration is shared through the repository itself, so every teammate working in that project receives it automatically. User-scope configuration is personal and does not propagate to anyone else, which is exactly the gap in the scenario.",
+    "optionExplanations": {
+      "a": "User scope is personal to one engineer's environment; requiring every teammate to separately copy the same content defeats the goal of automatic, shared delivery.",
+      "b": "A chat message is not persistent configuration. New teammates, new sessions, or anyone who missed the message will not receive the conventions.",
+      "c": "Committing project-scoped configuration means the conventions travel with the repository and apply to anyone working in it, which matches the stated goal.",
+      "d": "A comment in one file only affects work touching that file and is not a mechanism Claude Code treats as project-wide guidance."
+    },
+    "sourceReferences": [
+      "https://code.claude.com/docs/en/memory — cited in docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md source catalog (accessed 2026-07-14)",
+      "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 3 — configuration scopes"
+    ],
+    "baseWeight": 1
+  },
+  {
+    "id": "reference-structured-output-001",
+    "status": "draft",
+    "topic": "Structured output validation",
+    "difficulty": "Intermediate",
+    "tags": ["prompt-engineering-structured-output", "schema-design"],
+    "question": "An invoice-extraction pipeline requires every record to include a non-null \"phone_number\" string. Many source invoices never list a phone number, and the model has started fabricating plausible-looking numbers to satisfy the schema. What is the best fix?",
+    "options": [
+      { "id": "a", "text": "Keep the field required and instruct the model to \"use your best judgment\" when the source lacks a value." },
+      { "id": "b", "text": "Retry the extraction repeatedly on the same document until a phone number appears in the output." },
+      { "id": "c", "text": "Delete the field from the schema so its absence is never visible to downstream reviewers." },
+      { "id": "d", "text": "Make the field nullable, instruct the model to return null (or an explicit \"unclear\" value) when the source does not contain it, and validate that distinction downstream." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "A required field forces a value even when the source has none, which turns genuine absence into fabrication. Modeling missing or ambiguous source data explicitly — with a nullable field or an explicit sentinel like \"unclear\" — lets the schema stay valid without inventing facts, and preserves the distinction for downstream validation or review.",
+    "optionExplanations": {
+      "a": "\"Best judgment\" is not an actionable constraint; a required field with no path for absence will keep producing fabricated values whenever the source is silent.",
+      "b": "Retrying does not help when the required evidence simply is not present in the source; it wastes cycles without producing a truthful value.",
+      "c": "Removing the field hides the gap rather than resolving it, and discards information a reviewer or downstream process may need to know is missing.",
+      "d": "This directly matches the documented pattern: allow nullable/optional fields or explicit \"unclear\" values instead of forcing fabrication to satisfy a required schema field."
+    },
+    "sourceReferences": [
+      "https://platform.claude.com/docs/en/build-with-claude/structured-outputs — cited in docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md source catalog (accessed 2026-07-14)",
+      "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 4 — structured output and semantic validation"
+    ],
+    "baseWeight": 1
+  },
+  {
+    "id": "reference-eval-calibration-001",
+    "status": "draft",
+    "topic": "Evaluation calibration",
+    "difficulty": "Advanced",
+    "tags": ["context-management-reliability", "evaluation-segmentation"],
+    "question": "An extraction system reports 96% aggregate accuracy, and the team is considering reducing human review to cut cost. A closer look shows the aggregate figure blends a document type the system handles almost perfectly with a smaller, weaker document type. Which action best determines whether review can safely be reduced?",
+    "options": [
+      { "id": "a", "text": "Segment evaluation results by document type and confidence level, and calibrate the review threshold against labeled outcomes for each segment separately." },
+      { "id": "b", "text": "Trust the 96% aggregate figure and reduce review uniformly across every document type." },
+      { "id": "c", "text": "Increase human review equally across all document types regardless of their measured error rates." },
+      { "id": "d", "text": "Rely on the model's self-reported confidence score as the review signal without checking it against labeled outcomes." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "A strong aggregate accuracy figure can hide a weak segment. Segmenting evaluation by a meaningful dimension such as document type, and calibrating confidence thresholds against labeled outcomes for each segment, reveals whether the weaker segment still needs review even though the overall number looks safe to act on.",
+    "optionExplanations": {
+      "a": "This directly addresses the risk described: it surfaces the weaker segment's true error rate and grounds any threshold decision in labeled outcomes rather than an aggregate.",
+      "b": "The scenario already shows the aggregate conceals a weaker segment; acting on it directly would reduce review precisely where it is still needed.",
+      "c": "Uniformly increasing review ignores the evidence that one segment already performs well, wasting review effort without targeting the actual risk.",
+      "d": "An uncalibrated self-reported confidence score is not a substitute for checking outcomes against labeled data, and does not address the segment-level blind spot at all."
+    },
+    "sourceReferences": [
+      "https://platform.claude.com/docs/en/test-and-evaluate/eval-tool — cited in docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md source catalog (accessed 2026-07-14)",
+      "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 5 — evaluation, reliability, and human review"
+    ],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "reference-subagent-handoff-001",
+    "status": "draft",
+    "topic": "Subagent context handoff",
+    "difficulty": "Advanced",
+    "tags": ["agentic-architecture-orchestration", "subagent-handoff"],
+    "question": "A coordinator delegates a research subtask to a subagent, expecting the subagent to already know facts established earlier in the parent conversation. The subagent's response ignores that earlier context entirely. What is the most likely cause, and the correct fix?",
+    "options": [
+      { "id": "a", "text": "The subagent has a smaller context window; instruct the coordinator to summarize its own messages more concisely." },
+      { "id": "b", "text": "Subagents do not automatically receive the parent's full conversation; the coordinator must explicitly pass the relevant goals, facts, and constraints in the delegation." },
+      { "id": "c", "text": "The model is malfunctioning for this request; retry the identical delegation unchanged." },
+      { "id": "d", "text": "Subagents share memory with the coordinator only starting on a second exchange, so a follow-up call will succeed without any prompt change." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "Subagent isolation reduces context pollution but creates an explicit handoff obligation: the coordinator must pass goals, relevant facts, constraints, and the output contract, because the subagent does not automatically inherit the parent conversation. The fix is an explicit handoff, not a retry or an assumption about shared memory.",
+    "optionExplanations": {
+      "a": "Context-window size is not the described symptom; the subagent lacks the facts because they were never passed, not because a summary was too long.",
+      "b": "This matches the documented isolation model directly: pass the needed context explicitly in the delegation rather than assuming it carries over.",
+      "c": "Nothing in the scenario indicates a model malfunction; an unchanged retry will reproduce the same missing-context outcome.",
+      "d": "Subagents do not gain access to the parent conversation simply by making a second call; the missing information must be included in the handoff itself."
+    },
+    "sourceReferences": [
+      "https://code.claude.com/docs/en/sub-agents — cited in docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md source catalog (accessed 2026-07-14)",
+      "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 1 — orchestration and handoffs"
+    ],
+    "baseWeight": 1
+  }
+]
