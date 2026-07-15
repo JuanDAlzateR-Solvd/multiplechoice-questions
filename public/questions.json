@@ -622,5 +622,485 @@
     },
     "sourceReferences": ["https://code.claude.com/docs/en/sub-agents"],
     "baseWeight": 1.2
+  },
+  {
+    "id": "tool-design-mcp-001",
+    "status": "reviewed",
+    "topic": "MCP resources vs. tools",
+    "difficulty": "Foundational",
+    "tags": ["tool-design-mcp-integration", "mcp-resources-vs-tools"],
+    "question": "An internal MCP server offers a fixed catalog of supported report types (rarely changes, no parameters) alongside a \"generate custom report\" operation that takes a date range and format as parameters. How should these two capabilities best be exposed through MCP?",
+    "options": [
+      { "id": "a", "text": "Expose the report-type catalog as an MCP resource for discovery, and expose \"generate custom report\" as a tool, since it takes parameters and performs an action." },
+      { "id": "b", "text": "Expose both capabilities as MCP tools, since tools are the only way to expose any server capability to the model." },
+      { "id": "c", "text": "Expose both capabilities as MCP resources, since resources are simpler for the model to call than tools." },
+      { "id": "d", "text": "Merge both into a single tool that accepts an optional \"list catalog only\" flag to reduce the number of exposed capabilities." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "MCP resources fit discoverable, read-oriented context such as a static catalog, while tools fit parameterized or effectful operations. The catalog has no parameters and rarely changes, so it belongs as a resource; the custom-report operation takes parameters and performs work, so it belongs as a tool.",
+    "optionExplanations": {
+      "a": "This matches the intended MCP distinction: static discoverable context as a resource, parameterized action as a tool.",
+      "b": "Treating a static catalog as a tool forces the model to call an action-shaped interface for something that is really just discoverable context.",
+      "c": "The custom-report operation takes parameters and performs work; treating it as a resource loses the parameterized-action semantics tools are meant to provide.",
+      "d": "Merging an unrelated read-only catalog into a parameterized action tool blurs the resource/tool distinction instead of resolving it, and adds an unnecessary flag."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/mcp", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 2 - MCP resources vs. tools"],
+    "baseWeight": 1
+  },
+  {
+    "id": "tool-design-mcp-002",
+    "status": "reviewed",
+    "topic": "Built-in tool selection",
+    "difficulty": "Foundational",
+    "tags": ["tool-design-mcp-integration", "built-in-tool-selection"],
+    "question": "A developer needs to find every file in a large repository that calls a specific deprecated function name, regardless of which directory or file extension it appears in. Which built-in tool best fits this need?",
+    "options": [
+      { "id": "a", "text": "Glob, using a broad pattern such as \"**/*\" to match every file in the repository." },
+      { "id": "b", "text": "Write, to regenerate each file after manually checking it for the deprecated call." },
+      { "id": "c", "text": "Grep, searching file contents for the deprecated function name." },
+      { "id": "d", "text": "Edit, applying the same targeted replacement across every file in one pass." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "The requirement is to match file contents (a specific function name), not file paths or extensions, so Grep is the right tool. Glob matches paths/patterns but cannot search inside file contents.",
+    "optionExplanations": {
+      "a": "Glob matches file paths against a pattern; it does not inspect file contents, so it cannot find calls to a specific function name.",
+      "b": "Write is for creating or fully replacing file content, not for searching across a repository.",
+      "c": "Grep searches file contents for a pattern, which is exactly what finding every call site of a deprecated function requires.",
+      "d": "Edit performs a targeted replacement in one already-identified file; it does not search across a repository to find matches first."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/configuration", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 2 - built-in tool selection"],
+    "baseWeight": 1
+  },
+  {
+    "id": "tool-design-mcp-003",
+    "status": "reviewed",
+    "topic": "Built-in tool selection",
+    "difficulty": "Foundational",
+    "tags": ["tool-design-mcp-integration", "built-in-tool-selection"],
+    "question": "A developer needs to locate every file matching the pattern \"*.test.ts\" across a large monorepo, without inspecting or caring about what any of the files contain. Which built-in tool best fits this need?",
+    "options": [
+      { "id": "a", "text": "Grep, searching for the literal string \".test.ts\" inside file contents." },
+      { "id": "b", "text": "Glob, matching the \"*.test.ts\" path pattern across the repository." },
+      { "id": "c", "text": "Read, opening each file individually to check its name." },
+      { "id": "d", "text": "Edit, applying a rename pattern to every matching file." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "The requirement is purely about matching file paths by pattern, with no need to inspect contents, which is exactly what Glob is for. Grep is for content search, not path matching.",
+    "optionExplanations": {
+      "a": "Grep searches file contents; matching a filename pattern is a path-matching task, not a content-search task.",
+      "b": "Glob matches paths against a pattern, which directly fits locating files by name pattern without reading their contents.",
+      "c": "Read opens a specific known file to inspect it; it is not a mechanism for finding files by pattern across a repository.",
+      "d": "Edit performs a targeted content replacement in a file; renaming or locating files by pattern is not its purpose."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/configuration", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 2 - built-in tool selection"],
+    "baseWeight": 1
+  },
+  {
+    "id": "tool-design-mcp-004",
+    "status": "reviewed",
+    "topic": "tool_choice modes",
+    "difficulty": "Foundational",
+    "tags": ["tool-design-mcp-integration", "tool-choice"],
+    "question": "A pipeline requires that every incoming request first be classified by calling a specific classify_intent tool, before any other processing happens, regardless of what the request contains. Which tool_choice configuration best enforces this?",
+    "options": [
+      { "id": "a", "text": "Automatic tool choice, trusting the model to select classify_intent on its own for every request." },
+      { "id": "b", "text": "A tool_choice requiring that some tool be called, without specifying which one." },
+      { "id": "c", "text": "No tool_choice configuration, relying on the system prompt to describe the requirement in prose." },
+      { "id": "d", "text": "A tool_choice that forces the specific named tool classify_intent." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "Forcing the specific named tool guarantees that exact tool is called every time, which matches the requirement that classification always happens first regardless of request content. Automatic selection or an unspecified 'some tool' requirement cannot guarantee the same tool is chosen every time.",
+    "optionExplanations": {
+      "a": "Automatic selection lets the model choose freely among eligible tools; it does not guarantee classify_intent specifically is called every time.",
+      "b": "Requiring 'some tool' only guarantees a tool call happens, not that it is the specific classify_intent tool the pipeline requires first.",
+      "c": "A prose instruction with no tool_choice constraint is not a guarantee; the model could still skip the required tool or choose another one.",
+      "d": "Forcing the named tool via tool_choice is the documented mechanism for guaranteeing a specific tool is invoked."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 2 - tool_choice modes"],
+    "baseWeight": 1
+  },
+  {
+    "id": "tool-design-mcp-005",
+    "status": "reviewed",
+    "topic": "MCP configuration scope",
+    "difficulty": "Foundational",
+    "tags": ["tool-design-mcp-integration", "mcp-configuration-scope"],
+    "question": "A team wants a shared internal-documentation MCP server available automatically to every teammate working in a repository. Separately, one engineer wants to try out their own experimental MCP server that only they should use. How should these two servers be configured?",
+    "options": [
+      { "id": "a", "text": "Configure the shared documentation server at project scope (committed to the repository) and the experimental server at user scope (personal to that engineer)." },
+      { "id": "b", "text": "Configure both servers at user scope, since MCP configuration is always personal to each developer." },
+      { "id": "c", "text": "Configure both servers at project scope, since committing configuration is the only way Claude Code can discover an MCP server." },
+      { "id": "d", "text": "Configure the shared server at user scope and have the engineer manually share their personal config file with teammates over chat." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "Project scope is checked into the repository and applies to every teammate automatically, which fits a server the whole team should share. User scope is personal to one developer's environment, which fits an individual's own experiment that should not affect anyone else.",
+    "optionExplanations": {
+      "a": "This matches the documented scope distinction: shared/team servers at project scope, personal experiments at user scope.",
+      "b": "User scope would not make the shared documentation server available to the rest of the team automatically, defeating the stated goal.",
+      "c": "Project scope is appropriate for shared configuration, but forcing the personal experimental server into project scope would expose it to the whole team unnecessarily.",
+      "d": "Manually sharing a personal config file over chat is not persistent, automatic, or reliable for every teammate, unlike committed project-scoped configuration."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/mcp", "https://code.claude.com/docs/en/configuration", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 2 - MCP configuration scope"],
+    "baseWeight": 1
+  },
+  {
+    "id": "tool-design-mcp-006",
+    "status": "reviewed",
+    "topic": "Least-privilege tool allocation",
+    "difficulty": "Foundational",
+    "tags": ["tool-design-mcp-integration", "least-privilege"],
+    "question": "A meeting-scheduling assistant is given a calendar-booking tool for its actual job, plus an unrelated \"reset admin password\" tool that someone added \"in case it's ever useful.\" What is the best correction?",
+    "options": [
+      { "id": "a", "text": "Keep both tools, since giving an agent more tools increases its flexibility to handle unexpected requests." },
+      { "id": "b", "text": "Keep both tools, but add a system-prompt instruction telling the assistant not to use the admin tool." },
+      { "id": "c", "text": "Remove the unrelated admin tool; scope the assistant to only the tools its scheduling role actually needs." },
+      { "id": "d", "text": "Replace the calendar-booking tool with the admin tool, since the admin tool is more powerful." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "Restricting an agent to role-relevant tools is a deterministic control that eliminates an unnecessary and unrelated capability. A prose instruction not to use a tool is not an enforcement mechanism, and 'more tools for flexibility' is exactly the misconception this scenario is testing.",
+    "optionExplanations": {
+      "a": "Adding an unrelated, sensitive tool 'for flexibility' expands what the agent could call without any corresponding need for its actual job.",
+      "b": "A system-prompt instruction is not a deterministic boundary; it does not remove the agent's ability to actually call the admin tool.",
+      "c": "Removing the tool the assistant's role never needs is the direct, deterministic fix and matches least-privilege tool scoping.",
+      "d": "Replacing the actually-needed calendar tool with an unrelated admin tool would break the assistant's real job while keeping the unrelated risk."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 2 - least-privilege tool allocation"],
+    "baseWeight": 1
+  },
+  {
+    "id": "tool-design-mcp-007",
+    "status": "reviewed",
+    "topic": "Built-in tool selection",
+    "difficulty": "Intermediate",
+    "tags": ["tool-design-mcp-integration", "built-in-tool-selection"],
+    "question": "Two tasks arise in the same session: (1) change one clearly unique line in a configuration file to a new value, and (2) regenerate an entire configuration file from a new template because the old structure no longer applies. Which built-in tool pairing best fits these two tasks?",
+    "options": [
+      { "id": "a", "text": "Use Write for both tasks, since it can create or replace any file regardless of how small the change is." },
+      { "id": "b", "text": "Use Edit for both tasks, since it can also create a brand-new file structure when needed." },
+      { "id": "c", "text": "Use Grep for the single-line change and Glob for the full-file regeneration." },
+      { "id": "d", "text": "Use Edit for the single unique line change, and Write for the full-file regeneration." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "Edit is suited to a targeted, unique replacement within an existing file, while Write is suited to creating or fully replacing a file's content. Using Write for a one-line change discards unrelated existing content unnecessarily, and Edit is not meant for full-file regeneration from a new template.",
+    "optionExplanations": {
+      "a": "Using Write for the single-line change means regenerating and risking the rest of the file's content just to change one line, when a targeted edit would do.",
+      "b": "Edit performs targeted replacements against existing unique text; it is not designed to create a new file structure from a template.",
+      "c": "Grep and Glob are search tools, not editing tools; neither can change a file's content or regenerate it from a template.",
+      "d": "This matches each tool's intended use: Edit for a unique targeted replacement, Write for full-file creation or replacement."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/configuration", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 2 - built-in tool selection"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "tool-design-mcp-008",
+    "status": "reviewed",
+    "topic": "tool_choice modes",
+    "difficulty": "Intermediate",
+    "tags": ["tool-design-mcp-integration", "tool-choice"],
+    "question": "A support agent has several eligible tools (issue a refund, escalate to a human, send a follow-up email) and must always take one of these actions rather than replying with prose alone, but which action is appropriate depends on the conversation and should remain the model's choice. Which tool_choice configuration best fits this requirement?",
+    "options": [
+      { "id": "a", "text": "Force a single specific named tool for every request, regardless of which action actually fits the conversation." },
+      { "id": "b", "text": "Use fully automatic tool choice, leaving open the possibility that the model replies with prose only." },
+      { "id": "c", "text": "Require that some tool be called, without forcing a specific one, so the model must act but can choose which eligible tool fits." },
+      { "id": "d", "text": "Remove tool_choice configuration entirely and rely on a system-prompt instruction that the agent must always act." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "Requiring that some tool be called guarantees the agent takes action while still letting the model choose which eligible tool fits the conversation, which is exactly the combination the scenario needs. Forcing one named tool removes that choice, and automatic selection alone would still permit a prose-only reply.",
+    "optionExplanations": {
+      "a": "Forcing one specific tool would call the same action every time, even when a different eligible tool actually fits the conversation better.",
+      "b": "Automatic tool choice still permits the model to answer with prose only, which fails the requirement that some action always be taken.",
+      "c": "This is the documented middle ground: require some tool call while leaving the specific choice to the model.",
+      "d": "A prose instruction is not an enforced constraint; without a tool_choice setting, the model could still reply without calling any tool."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 2 - tool_choice modes"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "tool-design-mcp-009",
+    "status": "reviewed",
+    "topic": "Tool description design",
+    "difficulty": "Intermediate",
+    "tags": ["tool-design-mcp-integration", "tool-description-design"],
+    "question": "An agent has two tools, update_customer_record and update_customer_profile, with nearly identical, well-typed argument schemas. One updates billing details and the other updates contact information, but the model frequently calls the wrong one for a given request. What is the best fix?",
+    "options": [
+      { "id": "a", "text": "Merge the schemas into one combined schema so the two tools become fully interchangeable." },
+      { "id": "b", "text": "Rewrite each tool's description to state its distinct purpose, when to use it, and its scope boundary, rather than relying on the schema to distinguish them." },
+      { "id": "c", "text": "Rename both tools to more generic names so the model treats them as equally likely choices." },
+      { "id": "d", "text": "Remove the argument schemas entirely, since schema similarity is causing the confusion." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "A similar or identical schema does not by itself make correct tool selection easy; selection also depends on clear, distinct descriptions of purpose, when-to-use, and boundaries. The fix here is sharpening the descriptions, not changing the schemas.",
+    "optionExplanations": {
+      "a": "Merging the schemas does not resolve the confusion; it removes the meaningful distinction between billing and contact-info updates entirely.",
+      "b": "This directly targets the actual cause: the schemas are already well-typed, but the descriptions do not clearly separate purpose and scope.",
+      "c": "Generic names would make the two tools even harder to distinguish, worsening the exact problem described.",
+      "d": "Removing schemas would harm argument validation without addressing why the model can't tell the two tools apart in the first place."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 2 - tool description design"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "tool-design-mcp-010",
+    "status": "reviewed",
+    "topic": "Splitting vs. consolidating tools",
+    "difficulty": "Intermediate",
+    "tags": ["tool-design-mcp-integration", "tool-consolidation"],
+    "question": "A single manage_ticket tool accepts a mode parameter that can be \"create\", \"close\", or \"escalate\", and the model frequently selects the wrong mode for a given request. What is the best fix?",
+    "options": [
+      { "id": "a", "text": "Split manage_ticket into separate tools (for example create_ticket, close_ticket, escalate_ticket) since the selection conditions for each action are meaningfully different." },
+      { "id": "b", "text": "Keep the single tool, but rename the mode parameter to something more descriptive." },
+      { "id": "c", "text": "Keep the single tool, and add more example values to the mode parameter's schema." },
+      { "id": "d", "text": "Remove the mode parameter entirely so the tool always defaults to \"create.\"" }
+    ],
+    "correctOptionId": "a",
+    "explanation": "When a tool's parameter effectively selects among actions with meaningfully different conditions for when each applies, splitting into distinct tools gives the model a clearer selection decision than picking the right value of an internal mode parameter.",
+    "optionExplanations": {
+      "a": "Splitting into distinct tools turns an internal, easily-mis-set parameter into a clear top-level tool choice, matching each action's distinct selection conditions.",
+      "b": "Renaming the parameter does not change the underlying difficulty of choosing the correct mode value for a given request.",
+      "c": "More example values in the schema documents the parameter better but does not resolve the deeper issue that three distinct actions are bundled behind one choice.",
+      "d": "Removing the parameter and defaulting to one action would silently perform the wrong action whenever \"close\" or \"escalate\" was actually needed."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 2 - splitting vs. consolidating tools"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "tool-design-mcp-011",
+    "status": "reviewed",
+    "topic": "Tool error classification",
+    "difficulty": "Intermediate",
+    "tags": ["tool-design-mcp-integration", "error-classification"],
+    "question": "A refund-processing tool currently returns the identical message \"refund failed\" whether the payment gateway timed out, the submitted card number was invalid, the calling agent lacked permission for that merchant, or there were simply zero refund-eligible transactions found. What is the best redesign?",
+    "options": [
+      { "id": "a", "text": "Keep one message, but append a numeric error code that only engineers can look up later." },
+      { "id": "b", "text": "Return \"refund failed\" only for timeouts, and silently return an empty list for every other case." },
+      { "id": "c", "text": "Escalate every one of these outcomes to a human reviewer immediately, without distinguishing them." },
+      { "id": "d", "text": "Differentiate the outcome types (transient timeout, invalid input, permission denial, and valid empty result), and include retryability plus enough context for the agent to choose the right recovery path." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "Collapsing a timeout, invalid input, a permission denial, and a legitimate empty result into one message removes exactly the information an agent needs to decide whether to retry, correct its input, or stop. Classifying the outcome and stating retryability restores that decision-relevant context.",
+    "optionExplanations": {
+      "a": "An opaque error code that only engineers can interpret still leaves the agent unable to choose a recovery path in the moment.",
+      "b": "Collapsing invalid input, permission denial, and a valid empty result into a silent empty list hides real failures and misrepresents them as a normal empty result.",
+      "c": "Escalating a valid empty result or a simple invalid-input case to a human wastes review effort on situations the agent could resolve itself with better error information.",
+      "d": "This directly resolves the ambiguity: retryable timeouts, correctable invalid input, non-retryable permission denials, and a distinct empty-result outcome all get the information the agent needs."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/agents-and-tools/tool-use/troubleshooting-tool-use", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 2 - error classification"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "tool-design-mcp-012",
+    "status": "reviewed",
+    "topic": "Tool error classification",
+    "difficulty": "Intermediate",
+    "tags": ["tool-design-mcp-integration", "error-classification"],
+    "question": "A document-search tool returns the same \"search failed\" result whether the search legitimately matched zero documents or the caller lacked permission to access the target directory. Agents calling this tool sometimes retry a permission failure repeatedly, and sometimes report a real empty result as an error. What is the best fix?",
+    "options": [
+      { "id": "a", "text": "Return \"search failed\" only for permission errors, and stop distinguishing legitimate empty results at all." },
+      { "id": "b", "text": "Have the tool retry the search internally several times before returning any result to the agent." },
+      { "id": "c", "text": "Distinguish a valid empty result (no matching documents) from an access failure that requires escalation, rather than collapsing both into one failure state." },
+      { "id": "d", "text": "Remove the permission check so every search always returns whatever documents are technically reachable." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "A valid empty result and an access failure call for different agent behavior: an empty result is a normal outcome to report as-is, while a permission failure should not be silently retried and may need escalation. Collapsing both into one \"search failed\" state is exactly what causes the observed misbehavior.",
+    "optionExplanations": {
+      "a": "This still collapses two different outcomes into one message, just from the opposite direction, and continues to misreport genuine empty results as failures.",
+      "b": "Retrying internally does nothing for a permission failure, which is not transient, and adds needless delay before a real empty result is ever returned.",
+      "c": "This directly separates the two outcomes so the agent can report a real empty result normally and treat a permission failure as needing escalation rather than a retry.",
+      "d": "Removing the permission check would let the tool return documents the caller was never authorized to see, which is a security regression, not a fix for error classification."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/agents-and-tools/tool-use/troubleshooting-tool-use", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 2 - error classification"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "tool-design-mcp-013",
+    "status": "reviewed",
+    "topic": "Least-privilege tool allocation",
+    "difficulty": "Intermediate",
+    "tags": ["tool-design-mcp-integration", "least-privilege"],
+    "question": "A finance-summarization agent's job is to read transaction data and produce reports. It has also been granted issue_refund and delete_transaction tools, neither of which its summarization role ever needs to call. What is the best correction?",
+    "options": [
+      { "id": "a", "text": "Restrict the agent to read/query tools only, and remove the mutating tools it does not need for its role." },
+      { "id": "b", "text": "Keep all tools available, but add a note in the report template reminding the agent not to issue refunds." },
+      { "id": "c", "text": "Keep all tools available, since a summarization agent producing accurate reports needs full visibility into every possible action." },
+      { "id": "d", "text": "Replace delete_transaction with an additional read-only tool, but keep issue_refund in case a report reveals an error needing correction." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "Restricting an agent to the tools its actual role needs is a deterministic way to remove risk from tools it should never call. A summarization role needs read access to produce reports, not the ability to mutate financial records.",
+    "optionExplanations": {
+      "a": "This directly matches least-privilege scoping: keep the read/query tools the role needs and remove the unrelated mutating tools.",
+      "b": "A note in a report template is not an enforcement mechanism and does not prevent the agent from calling either mutating tool.",
+      "c": "Full visibility into report data does not require the ability to take mutating actions; access to information and permission to act are different things.",
+      "d": "Keeping issue_refund \"just in case\" reintroduces the same unnecessary mutating capability the scenario is asking to remove."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 2 - least-privilege tool allocation"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "tool-design-mcp-014",
+    "status": "reviewed",
+    "topic": "MCP secrets hygiene",
+    "difficulty": "Intermediate",
+    "tags": ["tool-design-mcp-integration", "mcp-secrets"],
+    "question": "An architect is about to commit a project-scoped .mcp.json that embeds a literal API token directly in the server's launch arguments, so the whole team can share the same configuration through the repository. What is the best correction?",
+    "options": [
+      { "id": "a", "text": "Commit the file as planned, since project scope is meant for exactly this kind of team-wide sharing." },
+      { "id": "b", "text": "Move the token into a code comment above the server definition so it's easy for teammates to find." },
+      { "id": "c", "text": "Keep the token out of the committed configuration (for example, referencing an environment variable or a local secret store) while still sharing the non-secret server definition at project scope." },
+      { "id": "d", "text": "Switch the whole configuration to user scope so no one has to worry about committing the token." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "Secrets should never be placed in committed configuration, regardless of scope. The team-wide sharing goal is still achieved by committing the non-secret server definition at project scope while each teammate supplies the actual token through an environment variable or personal secret store.",
+    "optionExplanations": {
+      "a": "Project scope is the right place for the shared, non-secret server definition, but that does not make it safe to embed a literal secret inside a committed file.",
+      "b": "A code comment is still part of the committed file and would expose the token to anyone with repository access, including in version-control history.",
+      "c": "This keeps the shared, non-secret configuration at project scope for the whole team while ensuring the secret itself is never committed.",
+      "d": "Moving to user scope avoids committing the token but sacrifices the team-wide sharing of the (non-secret) server configuration that was the actual goal."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/mcp", "https://code.claude.com/docs/en/configuration", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 2 - MCP secrets hygiene"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "tool-design-mcp-015",
+    "status": "reviewed",
+    "topic": "MCP resources vs. tools",
+    "difficulty": "Intermediate",
+    "tags": ["tool-design-mcp-integration", "mcp-resources-vs-tools"],
+    "question": "A team implemented a static, rarely-changing list of supported currency codes as an MCP tool that the model must call with a guessed placeholder argument, since the operation doesn't actually need any input. What is the best correction?",
+    "options": [
+      { "id": "a", "text": "Keep it as a tool, but make the placeholder argument optional so the model can omit it." },
+      { "id": "b", "text": "Re-expose the currency-code list as an MCP resource, since it is static, discoverable context rather than a parameterized action." },
+      { "id": "c", "text": "Split the list into many small tools, one per currency code, so each call is more specific." },
+      { "id": "d", "text": "Keep it as a tool and add more currency codes to the response so the tool is more useful." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "A static, non-parameterized catalog is discoverable context, which fits the MCP resource model rather than the tool model. Forcing it into a tool interface requires the model to invent an argument it does not actually need.",
+    "optionExplanations": {
+      "a": "Making the placeholder argument optional still keeps the capability shaped like an action tool when it is really just static context to discover.",
+      "b": "This matches the correct MCP pattern: static, discoverable catalogs belong as resources, not as tools requiring invented arguments.",
+      "c": "Splitting a static list into many single-currency tools multiplies the same underlying mismatch instead of resolving it.",
+      "d": "Adding more currency codes does not address why a static catalog was implemented as a parameterized tool in the first place."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/mcp", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 2 - MCP resources vs. tools"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "tool-design-mcp-016",
+    "status": "reviewed",
+    "topic": "Cross-role tool scoping",
+    "difficulty": "Advanced",
+    "tags": ["tool-design-mcp-integration", "least-privilege"],
+    "question": "Sales, support, and billing specialist agents are each scoped only to the tools their own domain needs. All three frequently need a customer's current account status, which none of them can look up directly, so every request routes back through the coordinator, creating a persistent bottleneck. What is the best architectural fix?",
+    "options": [
+      { "id": "a", "text": "Give every specialist full access to every other specialist's tools so any of them can look up account status directly." },
+      { "id": "b", "text": "Remove the coordinator entirely so specialists communicate with each other without any central routing." },
+      { "id": "c", "text": "Have the coordinator manually look up account status for every request and paste the result into each specialist's context." },
+      { "id": "d", "text": "Grant all three specialists one narrowly-scoped, read-only \"lookup account status\" tool, while keeping their deeper mutating actions role-specific." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "A narrowly-scoped, read-only tool that clearly serves a common, cross-role need removes the coordination bottleneck without abandoning least-privilege scoping for each specialist's other, role-specific tools.",
+    "optionExplanations": {
+      "a": "Giving every specialist every other specialist's full tool set reintroduces the 'every tool for flexibility' problem and grants far more access than the shared need requires.",
+      "b": "Removing the coordinator does not address the actual problem, which is a missing shared read-only capability, not the existence of coordination itself.",
+      "c": "Manual lookup-and-paste by the coordinator does not remove the bottleneck; it just moves the same repeated round-trip into a manual step.",
+      "d": "This matches the documented exception: a narrowly scoped, clearly justified cross-role tool can eliminate a genuine coordination bottleneck without abandoning role-specific scoping elsewhere."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 2 - least-privilege tool allocation"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "tool-design-mcp-017",
+    "status": "reviewed",
+    "topic": "MCP configuration scope",
+    "difficulty": "Advanced",
+    "tags": ["tool-design-mcp-integration", "mcp-configuration-scope"],
+    "question": "Every teammate needs to connect to the same shared MCP server (same URL and tool set), but each person must authenticate with their own personal credential rather than a single shared secret. What is the best configuration approach?",
+    "options": [
+      { "id": "a", "text": "Commit the shared, non-secret server definition (URL, tool configuration) at project scope, and have each developer supply their own credential through their own user-level configuration or environment." },
+      { "id": "b", "text": "Commit one shared credential at project scope so every teammate authenticates identically and no personal setup is required." },
+      { "id": "c", "text": "Have each teammate configure the entire server definition independently at user scope, duplicating the shared URL and tool configuration for each person." },
+      { "id": "d", "text": "Store every teammate's personal credential together in one shared project-scoped file so they are all available to anyone using the repository." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "The shared, non-secret parts of the server definition (its structure, URL, and tool configuration) belong at project scope so the whole team gets them automatically, while each person's individual credential is personal and belongs in their own user-level configuration, keeping secrets out of committed files.",
+    "optionExplanations": {
+      "a": "This cleanly separates the team-shared, non-secret configuration (project scope) from each individual's personal credential (user scope), matching both the sharing goal and the secrets-hygiene rule.",
+      "b": "A single shared credential committed to the repository defeats the requirement that each person authenticate with their own credential, and commits a secret to version control.",
+      "c": "Duplicating the entire shared server definition per teammate loses the benefit of a single, team-wide project-scoped configuration and invites drift between copies.",
+      "d": "Storing every teammate's individual credentials together in one committed file exposes all of their secrets to anyone with repository access, which is worse than a single shared secret."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/mcp", "https://code.claude.com/docs/en/configuration", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 2 - MCP configuration scope"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "tool-design-mcp-018",
+    "status": "reviewed",
+    "topic": "Tool error recovery routing",
+    "difficulty": "Advanced",
+    "tags": ["tool-design-mcp-integration", "error-classification"],
+    "question": "An agent calling an MCP tool can receive a result that means one of three different things: the upstream server had a transient outage, the agent supplied a malformed argument, or an organization policy blocked the operation entirely. The agent currently responds to all three the same way: it retries the identical call once and then gives up. What is the best redesign of the agent's response logic?",
+    "options": [
+      { "id": "a", "text": "Keep one uniform retry-once-then-give-up response for all three cases, since retry logic is simpler to maintain than case-specific handling." },
+      { "id": "b", "text": "Escalate all three cases to a human reviewer immediately, without ever attempting a retry or correction." },
+      { "id": "c", "text": "Route each case differently: retry the transient outage, correct and resend for the malformed argument, and escalate the policy block rather than retrying it." },
+      { "id": "d", "text": "Stop calling the MCP tool altogether and fall back to a different tool whenever any of the three responses occurs." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "A transient outage, a malformed argument, and a policy block call for different recovery actions: retry, correct-and-resend, and escalate, respectively. A single uniform response - including a blind retry on a policy block that will never succeed - fails at least two of the three cases.",
+    "optionExplanations": {
+      "a": "A uniform retry-then-give-up response wastes an attempt retrying a policy block that cannot succeed by retrying, and never corrects a malformed argument that a fix could resolve.",
+      "b": "Escalating every case, including a transient outage that would likely succeed on retry, wastes human review effort on situations the agent could resolve itself.",
+      "c": "This distinguishes the three outcomes and routes each to the recovery action that actually fits it, rather than treating them as interchangeable.",
+      "d": "Abandoning the tool entirely in favor of a fallback does not address any of the three specific causes and may not even be possible if the fallback tool covers different functionality."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/agents-and-tools/tool-use/troubleshooting-tool-use", "https://platform.claude.com/docs/en/agents-and-tools/mcp-connector", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 2 - error classification"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "tool-design-mcp-019",
+    "status": "reviewed",
+    "topic": "Untrusted tool arguments",
+    "difficulty": "Advanced",
+    "tags": ["tool-design-mcp-integration", "tool-argument-trust"],
+    "question": "An agent calls a transfer_funds tool with arguments that pass schema validation, but the arguments were shaped by text embedded in a document the agent had just fetched and read as part of its task - text that was actually attacker-controlled and steered the agent toward an unintended transfer. What is the best application-level response?",
+    "options": [
+      { "id": "a", "text": "Trust the call, since the arguments already passed schema validation and are therefore well-formed." },
+      { "id": "b", "text": "Add a stricter JSON schema with more field constraints so malformed arguments are rejected earlier." },
+      { "id": "c", "text": "Ask the model to double-check its own arguments before calling the tool again." },
+      { "id": "d", "text": "Independently authorize the transfer against the real user's actual permissions and account list in application code, since schema-valid arguments are not proof of legitimate authorization." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "Passing schema validation only confirms that the arguments are well-formed; it says nothing about whether the request reflects the real user's actual intent or authorization, especially when the arguments trace back to untrusted document content. The application must independently verify authorization before executing a sensitive action.",
+    "optionExplanations": {
+      "a": "Schema validity only checks shape and types; it does not verify that the request came from a legitimate, authorized instruction rather than injected content.",
+      "b": "A stricter schema can reject malformed arguments, but the arguments here are already well-formed and schema-valid - the problem is authorization, not shape.",
+      "c": "Asking the model to re-check its own arguments does not add an independent, trustworthy authorization boundary; the model can be steered by the same untrusted content again.",
+      "d": "This matches the required control: authorization must be enforced independently in application code, since tool arguments (and the content that shaped them) are untrusted input."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 2 - untrusted tool arguments"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "tool-design-mcp-020",
+    "status": "reviewed",
+    "topic": "Splitting vs. consolidating tools",
+    "difficulty": "Advanced",
+    "tags": ["tool-design-mcp-integration", "tool-consolidation"],
+    "question": "To simplify an agent's tool set, someone proposes merging archive_document (a reversible, soft action) and delete_document (an irreversible, hard action) into a single remove_document tool controlled by a mode parameter. What is the best response to this proposal?",
+    "options": [
+      { "id": "a", "text": "Keep the two tools split, since the two actions have meaningfully different consequences (reversible versus irreversible), and consolidating them would blur an important safety boundary." },
+      { "id": "b", "text": "Merge them as proposed, since fewer tools always make an agent's tool set easier for the model to reason about." },
+      { "id": "c", "text": "Merge them as proposed, but require a confirmation string in the mode parameter to lower the risk of the wrong mode being selected." },
+      { "id": "d", "text": "Split them further into four tools, one for each combination of document type and action, to be maximally specific." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "Splitting versus consolidating tools should follow whether their responsibilities and selection conditions are meaningfully distinct - here, the two actions differ in a safety-critical way (reversible versus irreversible), so keeping them as separate, clearly named tools preserves that distinction instead of hiding it behind a mode parameter.",
+    "optionExplanations": {
+      "a": "This preserves the meaningful distinction between a reversible and an irreversible action as separate, clearly identifiable tools, rather than folding a safety-critical difference into an internal parameter.",
+      "b": "Fewer tools are not automatically better; here it would hide a safety-relevant distinction behind a mode parameter the model could set incorrectly.",
+      "c": "A confirmation string reduces but does not remove the risk introduced by merging two actions with very different consequences into one tool.",
+      "d": "Splitting further by document type adds tools without addressing the actual concern in the proposal, which is whether to merge reversible and irreversible actions together."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 2 - splitting vs. consolidating tools"],
+    "baseWeight": 1.2
   }
 ]
