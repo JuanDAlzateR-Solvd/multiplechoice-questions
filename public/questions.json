@@ -1102,5 +1102,1445 @@
     },
     "sourceReferences": ["https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 2 - splitting vs. consolidating tools"],
     "baseWeight": 1.2
+  },
+  {
+    "id": "claude-code-config-001",
+    "status": "reviewed",
+    "topic": "Instruction scope selection",
+    "difficulty": "Foundational",
+    "tags": ["claude-code-configuration-workflows", "instruction-scope"],
+    "question": "A developer wants their own personal preference (always run the test suite in watch mode) to apply across every repository they work in, while the team's shared conventions (commit message format, required review checklist) should apply to everyone who clones a specific repository. How should these two kinds of guidance be configured?",
+    "options": [
+      { "id": "a", "text": "Put the personal watch-mode preference in that developer's user-scope memory, and put the shared conventions in the repository's project-scope CLAUDE.md." },
+      { "id": "b", "text": "Put both the personal preference and the shared conventions in the repository's project-scope CLAUDE.md, since project scope is the only place Claude Code reads instructions from." },
+      { "id": "c", "text": "Put both the personal preference and the shared conventions in the developer's user-scope memory, since user scope always takes precedence." },
+      { "id": "d", "text": "Put the shared conventions in the developer's user-scope memory so they load fastest, and leave the personal preference unconfigured." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "User scope is personal to one developer's environment and follows them across every project, which fits an individual preference that has nothing to do with a specific codebase. Project scope is committed to the repository and applies to every teammate who clones it, which fits conventions the whole team must share.",
+    "optionExplanations": {
+      "a": "This matches the intended split: personal, cross-repo preferences at user scope; repository-specific, team-shared conventions at project scope.",
+      "b": "Putting the personal preference in project scope would push it onto every teammate who clones the repository, even though it has nothing to do with the shared conventions.",
+      "c": "Putting the shared conventions in user scope means only that one developer receives them; teammates who never configured that memory would never see the required conventions.",
+      "d": "This inverts both assignments: the conventions need to reach every teammate (project scope), and the personal preference should not be silently dropped."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/memory", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 3 - instruction scope"],
+    "baseWeight": 1
+  },
+  {
+    "id": "claude-code-config-002",
+    "status": "reviewed",
+    "topic": "Team conventions placed at the wrong scope",
+    "difficulty": "Foundational",
+    "tags": ["claude-code-configuration-workflows", "instruction-scope"],
+    "question": "A tech lead writes the team's required PR-description template into their own user-scope memory file so that it shows up whenever they use Claude Code. They then tell the rest of the team that \"the PR template is now configured for the project.\" What is the problem with this approach?",
+    "options": [
+      { "id": "a", "text": "There is no problem; user-scope memory is shared automatically with everyone who has access to the same repository." },
+      { "id": "b", "text": "User-scope memory is personal to the tech lead's own environment, so teammates who clone the repository will never see the PR template unless it is also added at project scope." },
+      { "id": "c", "text": "The template should instead be placed in a directory-level CLAUDE.md so it only applies to one subdirectory of the repository." },
+      { "id": "d", "text": "User scope only applies during plan mode, so the template would be ignored during direct execution." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "A file at user scope is local to one developer's own machine and account; it never travels with the repository. A convention meant for every teammate needs to live at project scope, committed alongside the code, so that cloning the repository is enough to receive it.",
+    "optionExplanations": {
+      "a": "User-scope configuration is tied to the individual developer's environment, not to the repository, so it is not shared with anyone else automatically.",
+      "b": "This correctly identifies the mismatch: a team-wide convention needs project scope, not one person's user scope, to reach every teammate.",
+      "c": "A directory-level file would narrow the scope to one subdirectory, which does not fix the underlying problem of the guidance never leaving the tech lead's personal environment.",
+      "d": "Scope (user, project, directory) and mode (plan versus direct execution) are independent concepts; user-scope memory is not tied to plan mode."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/memory", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 3 - common misconceptions"],
+    "baseWeight": 1
+  },
+  {
+    "id": "claude-code-config-003",
+    "status": "reviewed",
+    "topic": "CLAUDE.md modularization",
+    "difficulty": "Intermediate",
+    "tags": ["claude-code-configuration-workflows", "claude-md-modularization"],
+    "question": "A repository's CLAUDE.md has grown to several thousand words, mixing general project background with narrow, rarely-needed instructions for a legacy billing module that only two engineers touch. What is the best way to keep this guidance useful without bloating every task's context?",
+    "options": [
+      { "id": "a", "text": "Delete the legacy billing instructions entirely, since most engineers never need them." },
+      { "id": "b", "text": "Keep everything in the single top-level CLAUDE.md so no guidance can ever be missed." },
+      { "id": "c", "text": "Move the narrow billing-module guidance into its own file referenced by import (or a directory-level rule scoped to that module's path), keeping the top-level CLAUDE.md focused on concise, broadly relevant project guidance." },
+      { "id": "d", "text": "Rename CLAUDE.md to a longer filename so Claude Code loads it with higher priority." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "CLAUDE.md is meant to stay concise and broadly relevant, since it loads into every session. Narrow, module-specific guidance is better isolated into an imported file or a path-scoped rule that only loads when work actually touches that path, keeping the always-on guidance lean.",
+    "optionExplanations": {
+      "a": "Deleting the guidance loses real information the two engineers who do touch that module still need.",
+      "b": "Keeping everything in one file means every task pays the context cost of the rarely-needed billing details, which is exactly the bloat to avoid.",
+      "c": "This matches the modularization pattern: broadly relevant guidance stays concise at the top level, and narrow guidance is isolated via imports or path-scoped rules so it only loads when relevant.",
+      "d": "File naming does not control loading priority or scope in this way; it does not address the underlying bloat problem."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/memory", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 3 - CLAUDE.md modularization"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "claude-code-config-004",
+    "status": "reviewed",
+    "topic": "Path-scoped rules",
+    "difficulty": "Intermediate",
+    "tags": ["claude-code-configuration-workflows", "path-scoped-rules"],
+    "question": "A monorepo contains a Python data-pipeline package and a TypeScript frontend package with unrelated linting and testing conventions. Instructions specific to the Python package keep appearing in unrelated frontend tasks because they live in the shared top-level CLAUDE.md. What is the best fix?",
+    "options": [
+      { "id": "a", "text": "Move the Python-specific conventions into a rule file with path frontmatter matching the data-pipeline package's directory, so it only applies when work touches that path." },
+      { "id": "b", "text": "Ask engineers to manually skip the Python instructions whenever they are working on the frontend." },
+      { "id": "c", "text": "Delete the Python conventions, since a shared file cannot express package-specific guidance." },
+      { "id": "d", "text": "Duplicate the entire top-level CLAUDE.md into both package directories so each has a private copy." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "Path-scoped rules (frontmatter that restricts a rule to matching file paths) let package-specific guidance load only for the work that actually touches those paths, instead of polluting every task with irrelevant instructions or relying on developers to manually filter them out.",
+    "optionExplanations": {
+      "a": "This is exactly what path-scoped rule frontmatter is for: narrow guidance loads only for matching paths, leaving unrelated frontend work unaffected.",
+      "b": "Manual filtering is unreliable and does not scale; it also does not stop the instructions from being surfaced in the first place.",
+      "c": "Deleting the guidance loses information the data-pipeline package still needs; the actual problem is scope, not the guidance's existence.",
+      "d": "Duplicating the whole file reintroduces the same bloat problem in two places and creates a maintenance burden of keeping both copies in sync."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/memory", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 3 - path-scoped rules"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "claude-code-config-005",
+    "status": "reviewed",
+    "topic": "Skills versus always-on guidance",
+    "difficulty": "Foundational",
+    "tags": ["claude-code-configuration-workflows", "skills-vs-claude-md"],
+    "question": "A team wants Claude Code to know two things: (1) a concise fact that is relevant on nearly every task, such as which package manager the repository uses, and (2) a detailed, multi-step procedure for cutting a quarterly release, which is only needed a few times a year. How should these two be configured?",
+    "options": [
+      { "id": "a", "text": "Put the package-manager fact in CLAUDE.md, since it is concise and broadly relevant, and put the release procedure in a skill that is invoked on demand." },
+      { "id": "b", "text": "Put both in CLAUDE.md, since anything the team might need should always be loaded." },
+      { "id": "c", "text": "Put both in a skill, since skills are the only supported way to store project guidance." },
+      { "id": "d", "text": "Put the release procedure in CLAUDE.md so it loads automatically every time, and put the package-manager fact in a skill invoked once per repository." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "CLAUDE.md is best used for concise, always-relevant guidance that nearly every task benefits from. Skills are best for detailed, on-demand workflows that are only needed in specific situations, since loading them into every task's context would be wasteful.",
+    "optionExplanations": {
+      "a": "This matches the intended split: concise, broadly relevant facts in CLAUDE.md; detailed, occasional procedures in an on-demand skill.",
+      "b": "Loading the full release procedure into every task's context is wasteful bloat for guidance that is rarely needed.",
+      "c": "CLAUDE.md is also a supported and appropriate place for concise, frequently relevant project guidance; skills are not the only option.",
+      "d": "This is inverted: the frequently relevant fact belongs in always-on CLAUDE.md, and the rarely-needed procedure belongs in an on-demand skill, not the reverse."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/memory", "https://code.claude.com/docs/en/features-overview", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 3 - skills vs. CLAUDE.md"],
+    "baseWeight": 1
+  },
+  {
+    "id": "claude-code-config-006",
+    "status": "reviewed",
+    "topic": "Overloading every task with specialized conventions",
+    "difficulty": "Intermediate",
+    "tags": ["claude-code-configuration-workflows", "skills-vs-claude-md"],
+    "question": "A repository has five specialized skills, one each for database migrations, security review, release cutting, incident response, and API-contract review. A developer proposes merging all five into CLAUDE.md so that \"Claude Code always knows how to do everything.\" What is the main problem with this proposal?",
+    "options": [
+      { "id": "a", "text": "It would load every specialized convention into every task's context regardless of relevance, defeating the purpose of on-demand skills." },
+      { "id": "b", "text": "CLAUDE.md cannot contain procedural instructions, only factual project background." },
+      { "id": "c", "text": "Skills cannot be merged into CLAUDE.md for technical reasons, so the proposal is not possible to implement." },
+      { "id": "d", "text": "There is no real problem; merging them would make the five procedures load faster." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "Skills exist so that detailed, situational procedures load only when actually relevant. Folding all of them into always-on CLAUDE.md guidance means every task, including ones that touch none of those five workflows, pays the context cost of loading all five procedures.",
+    "optionExplanations": {
+      "a": "This identifies the real cost: always-on guidance loads for every task, so merging five specialized, situational procedures into it bloats every unrelated task's context.",
+      "b": "CLAUDE.md can contain procedural guidance; the issue here is not what kind of content it holds but that it would load unconditionally into every task.",
+      "c": "The proposal is technically possible to implement; the reason to avoid it is the context cost, not a technical restriction.",
+      "d": "Merging does not make the procedures load faster; it makes them load more often, including when they are not needed."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/features-overview", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 3 - common misconceptions"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "claude-code-config-007",
+    "status": "reviewed",
+    "topic": "Context isolation for exploratory work",
+    "difficulty": "Advanced",
+    "tags": ["claude-code-configuration-workflows", "context-isolation"],
+    "question": "While diagnosing a production bug, an engineer needs Claude Code to read through dozens of log files and several loosely related modules to narrow down a root cause, generating a large amount of exploratory back-and-forth. The engineer still wants the main session to stay focused so later steps (writing the fix, updating the changelog) are not diluted by all that exploration. What is the best approach?",
+    "options": [
+      { "id": "a", "text": "Perform the exploration in the main session directly, since keeping everything in one place is always simpler." },
+      { "id": "b", "text": "Delegate the log and module exploration to a subagent (or an isolated skill invocation), and have it return only the narrowed-down root cause to the main session." },
+      { "id": "c", "text": "Paste every log file into the main session's CLAUDE.md so it is always available." },
+      { "id": "d", "text": "Ask the engineer to manually summarize the logs before ever involving Claude Code." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "Isolating verbose, exploratory work in a subagent or dedicated skill invocation keeps that noise out of the main session's context. Only the distilled result (the root cause) needs to return, preserving the main session's focus for the steps that follow.",
+    "optionExplanations": {
+      "a": "Doing the exploration directly in the main session is exactly what dilutes its context with dozens of files' worth of exploratory detail.",
+      "b": "This matches the intended pattern: isolate the verbose work, and let only the useful, distilled conclusion flow back into the main session.",
+      "c": "CLAUDE.md is meant to be concise and always-relevant guidance, not a place to dump large volumes of one-off log content, and it would load into every future session as well.",
+      "d": "Manual summarization does not use Claude Code's own capability to isolate the exploration itself and adds unnecessary manual effort."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/features-overview", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 3 - context isolation"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "claude-code-config-008",
+    "status": "reviewed",
+    "topic": "Plan mode vs. direct execution",
+    "difficulty": "Foundational",
+    "tags": ["claude-code-configuration-workflows", "plan-mode"],
+    "question": "An engineer asks Claude Code to redesign how three services communicate, touching authentication, message queues, and shared data models, with several open design questions still unresolved. Which working mode best fits this request?",
+    "options": [
+      { "id": "a", "text": "Direct execution, since any request can be implemented immediately without first laying out an approach." },
+      { "id": "b", "text": "Plan mode, so the multi-file, architectural approach and its open questions can be reviewed and agreed on before code changes are made." },
+      { "id": "c", "text": "Print mode, since this is the correct tool for handling ambiguous, multi-file requests." },
+      { "id": "d", "text": "Neither mode; ambiguous requests should be declined until the engineer resolves every open question alone first." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "Plan mode is intended for ambiguous, architectural, or multi-file work where surfacing a proposed approach for review before touching code reduces the risk of building the wrong thing. Direct execution suits clear, well-scoped changes instead.",
+    "optionExplanations": {
+      "a": "Jumping straight into a multi-service, architecturally ambiguous change risks implementing an approach that has not been reviewed or agreed on.",
+      "b": "This matches plan mode's intended use: surface the approach and open questions for review before any code changes happen.",
+      "c": "Print mode (`-p`/`--print`) is a non-interactive CLI mode for CI and scripting, not a planning tool for ambiguous design work.",
+      "d": "Plan mode exists precisely to work through ambiguity collaboratively; declining the request outright discards that capability."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/permission-modes", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 3 - plan mode"],
+    "baseWeight": 1
+  },
+  {
+    "id": "claude-code-config-009",
+    "status": "reviewed",
+    "topic": "Misapplying plan mode",
+    "difficulty": "Intermediate",
+    "tags": ["claude-code-configuration-workflows", "plan-mode"],
+    "question": "A developer enters plan mode to fix an obvious one-character typo in a log message, and separately runs a broad, multi-service rename with several unresolved naming disputes directly, without planning. What is wrong with these two choices?",
+    "options": [
+      { "id": "a", "text": "Nothing is wrong; plan mode and direct execution are interchangeable regardless of the task." },
+      { "id": "b", "text": "Both choices are backwards: the trivial, obvious typo fix fits direct execution, and the broad, unresolved rename is exactly the ambiguous, multi-file work plan mode is meant for." },
+      { "id": "c", "text": "The typo fix should have used print mode instead, and the rename should have used plan mode." },
+      { "id": "d", "text": "The rename was correct to run directly, since renames are always mechanical, but the typo fix needed a plan." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "Plan mode is meant for ambiguous, architectural, or multi-file work with real decisions to review; direct execution suits clear, well-scoped changes. Using plan mode for a trivial one-line fix adds needless overhead, while skipping it for a broad, disputed rename risks executing an unreviewed, unresolved approach across many files.",
+    "optionExplanations": {
+      "a": "The two modes are suited to different kinds of tasks; picking the wrong one for a given task has real costs, either wasted overhead or unreviewed risk.",
+      "b": "This correctly identifies that both choices were reversed relative to the guidance: trivial changes fit direct execution, and ambiguous multi-file changes fit plan mode.",
+      "c": "Print mode is for non-interactive CI/scripting use, not a substitute for plan mode's role in reviewing an approach before changes are made.",
+      "d": "A rename touching multiple services with unresolved naming disputes is not purely mechanical; the open disputes are exactly the kind of ambiguity plan mode is meant to surface."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/permission-modes", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 3 - common misconceptions"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "claude-code-config-010",
+    "status": "reviewed",
+    "topic": "Refining results with concrete examples",
+    "difficulty": "Intermediate",
+    "tags": ["claude-code-configuration-workflows", "iterative-refinement"],
+    "question": "Claude Code generates a data-transformation function, but the output format does not match what the downstream consumer expects. The developer's first follow-up is simply \"that's not quite right, please fix it.\" What would most effectively improve the next attempt?",
+    "options": [
+      { "id": "a", "text": "Repeat the same vague follow-up a few more times until the output happens to match." },
+      { "id": "b", "text": "Provide a concrete example of an input and the exact expected output, so the mismatch is unambiguous." },
+      { "id": "c", "text": "Ask Claude Code to guess what \"not quite right\" means without further detail." },
+      { "id": "d", "text": "Discard the function and start an entirely new, unrelated task." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "Concrete input/output examples remove ambiguity about what \"wrong\" means and give a precise target the next attempt can be checked against, which is far more effective than vague feedback.",
+    "optionExplanations": {
+      "a": "Vague feedback repeated without new information gives no additional signal about what needs to change.",
+      "b": "This matches the guidance directly: a concrete example clarifies exactly what output is expected, improving the next attempt.",
+      "c": "Leaving the model to guess at an underspecified complaint is unlikely to converge on the actually intended fix.",
+      "d": "Abandoning the task discards the working context already built up and does not address the specific formatting mismatch."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/features-overview", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 3 - iterative refinement"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "claude-code-config-011",
+    "status": "reviewed",
+    "topic": "Refining with test failures and targeted clarification",
+    "difficulty": "Intermediate",
+    "tags": ["claude-code-configuration-workflows", "iterative-refinement"],
+    "question": "A generated function passes some unit tests but fails two edge cases involving empty input and negative numbers. Which follow-up is most likely to produce an effective correction?",
+    "options": [
+      { "id": "a", "text": "Share the two specific failing test cases and their actual versus expected output, and ask Claude Code to address those exact failures." },
+      { "id": "b", "text": "Say only \"some tests are still failing\" without naming which ones." },
+      { "id": "c", "text": "Rewrite all of the tests to match whatever the function currently returns." },
+      { "id": "d", "text": "Ask for a complete rewrite of the function from scratch with no other information." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "Pointing to the specific failing cases and the gap between actual and expected behavior gives a precise, targeted correction target, which tends to converge faster than vague or overly broad follow-ups.",
+    "optionExplanations": {
+      "a": "This gives the most specific, actionable information: exactly which cases fail and what they should have produced instead.",
+      "b": "Withholding which tests failed forces guessing about the actual problem, which is much less effective than naming the specific edge cases.",
+      "c": "Rewriting tests to match current (wrong) behavior hides the real defect rather than fixing it.",
+      "d": "A full rewrite request without any information about what specifically is wrong discards useful context and gives no better signal than the original vague failure."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/features-overview", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 3 - iterative refinement"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "claude-code-config-012",
+    "status": "reviewed",
+    "topic": "Non-interactive CI usage",
+    "difficulty": "Foundational",
+    "tags": ["claude-code-configuration-workflows", "ci-print-mode"],
+    "question": "A team wants a CI pipeline step to run Claude Code to summarize a diff, with no human available to respond to any interactive prompts. Which invocation approach fits this requirement?",
+    "options": [
+      { "id": "a", "text": "Run Claude Code in its normal interactive mode inside the CI job, since CI runners behave the same as a developer's terminal." },
+      { "id": "b", "text": "Run Claude Code with plan mode enabled, since plan mode is required for any automated pipeline step." },
+      { "id": "c", "text": "Run Claude Code with the `-p`/`--print` non-interactive flag so it runs to completion without waiting on interactive input." },
+      { "id": "d", "text": "Avoid using Claude Code in CI entirely, since it can only be used interactively." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "`-p`/`--print` runs Claude Code non-interactively, producing a result without pausing for interactive input, which is exactly what an unattended CI job needs.",
+    "optionExplanations": {
+      "a": "Normal interactive mode can wait on prompts that nothing in an unattended CI job can answer, risking a hang.",
+      "b": "Plan mode is about reviewing an approach before execution; it is unrelated to whether a CLI invocation is interactive or not.",
+      "c": "This is the documented mechanism for exactly this situation: non-interactive, unattended execution suitable for CI.",
+      "d": "Claude Code explicitly supports non-interactive, scriptable use via print mode; it is not restricted to interactive terminals only."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/cli-reference", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 3 - CI usage"],
+    "baseWeight": 1
+  },
+  {
+    "id": "claude-code-config-013",
+    "status": "reviewed",
+    "topic": "Machine-readable CI output",
+    "difficulty": "Intermediate",
+    "tags": ["claude-code-configuration-workflows", "ci-print-mode"],
+    "question": "A CI job runs Claude Code non-interactively and pipes the result into a script that must extract a pass/fail verdict and a list of file paths programmatically. What should the invocation additionally request to make this reliable?",
+    "options": [
+      { "id": "a", "text": "Free-form prose output, since downstream scripts can always parse natural language reliably." },
+      { "id": "b", "text": "A random sampling of the output, since consuming the entire response would be too slow for CI." },
+      { "id": "c", "text": "No special output format; the script should re-run Claude Code interactively whenever parsing fails." },
+      { "id": "d", "text": "Structured, machine-readable output (for example, a defined JSON shape) so the downstream script can parse the verdict and file paths without guessing at prose formatting." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "When a downstream process must parse the result programmatically, requesting a defined, machine-readable output shape (rather than free-form prose) makes that parsing reliable instead of dependent on brittle text-matching.",
+    "optionExplanations": {
+      "a": "Free-form prose is not reliably parseable by a script; wording variations can silently break extraction logic.",
+      "b": "Sampling part of the output risks missing the verdict or file paths entirely and is not a substitute for a defined output format.",
+      "c": "Falling back to interactive re-runs defeats the purpose of unattended CI and does not solve the parsing problem.",
+      "d": "This matches the guidance directly: request machine-readable output when downstream automation must parse the result."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/cli-reference", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 3 - CI usage"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "claude-code-config-014",
+    "status": "reviewed",
+    "topic": "CI invocation misconceptions",
+    "difficulty": "Intermediate",
+    "tags": ["claude-code-configuration-workflows", "ci-print-mode"],
+    "question": "An engineer configures a CI step as `claude \"summarize this diff\"` (without any print-mode flag) and assumes it will run to completion unattended. During a pipeline run, the job hangs. What is the most likely explanation?",
+    "options": [
+      { "id": "a", "text": "CI runners cannot execute any CLI tool, so the hang is unrelated to how Claude Code was invoked." },
+      { "id": "b", "text": "The hang indicates a network outage unrelated to the CLI invocation." },
+      { "id": "c", "text": "The diff was too large for any invocation of Claude Code to process." },
+      { "id": "d", "text": "Without the non-interactive print-mode flag, the invocation can behave as an interactive session, and nothing in the pipeline can supply the input it may wait for." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "Running the bare `claude \"prompt\"` form does not itself guarantee unattended, non-interactive execution; the documented way to guarantee that behavior is the explicit print-mode flag. Assuming otherwise is a common source of CI jobs hanging with no way to supply interactive input.",
+    "optionExplanations": {
+      "a": "CI runners regularly execute CLI tools; the hang points to how the tool was invoked, not a blanket incompatibility.",
+      "b": "Nothing in the scenario points to a network issue; the invocation choice is the more direct explanation for a hang in this exact setup.",
+      "c": "Diff size is not the described symptom here; the question specifically concerns invocation mode versus unattended execution.",
+      "d": "This correctly names the likely cause: omitting the explicit non-interactive flag risks interactive behavior with no way to respond in an unattended job."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/cli-reference", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 3 - common misconceptions"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "claude-code-config-015",
+    "status": "reviewed",
+    "topic": "Independent review architecture",
+    "difficulty": "Advanced",
+    "tags": ["claude-code-configuration-workflows", "independent-review"],
+    "question": "After Claude Code generates a large refactor within a single session, the team wants a genuinely independent check on whether the refactor introduced bugs, rather than a check that inherits the same assumptions the generating session already made. How should this review be structured?",
+    "options": [
+      { "id": "a", "text": "Ask the same session that generated the refactor to review its own diff immediately afterward." },
+      { "id": "b", "text": "Have the generating session write its own review comments into the pull request description before anyone else looks at it." },
+      { "id": "c", "text": "Skip review entirely, since a large refactor from Claude Code does not need independent verification." },
+      { "id": "d", "text": "Start a fresh, independent review context (a new session or subagent) that receives the diff without the generating session's prior reasoning, so it can evaluate the change without inheriting its assumptions." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "A review is most useful when it can challenge the decisions made during generation rather than simply continuing them. A fresh, independent context that has not seen the generating session's reasoning is better positioned to catch mistakes the original session was blind to.",
+    "optionExplanations": {
+      "a": "The same context that produced the refactor is prone to carrying forward the same blind spots and assumptions into its own review of that work.",
+      "b": "Self-authored review comments from the same session that made the change do not provide an independent perspective on the work.",
+      "c": "Skipping review removes a valuable check specifically for large refactors, where regressions are more likely and more costly.",
+      "d": "This matches the intended pattern: an independent context free of the generating session's prior reasoning can meaningfully challenge the change."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/features-overview", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 3 - independent review"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "claude-code-config-016",
+    "status": "reviewed",
+    "topic": "Self-review misconception",
+    "difficulty": "Advanced",
+    "tags": ["claude-code-configuration-workflows", "independent-review"],
+    "question": "A developer asks the same Claude Code session that just wrote a batch of code to \"now review this critically as if you were a skeptical senior engineer,\" within the same conversation. Why might this fall short of a genuinely independent review?",
+    "options": [
+      { "id": "a", "text": "It cannot fall short; asking for a different persona within the same session is equivalent to using a truly separate reviewer." },
+      { "id": "b", "text": "This approach is fine only for small changes, and the real issue is the size of the diff, not the review context." },
+      { "id": "c", "text": "Claude Code sessions cannot adopt a different review persona under any circumstance." },
+      { "id": "d", "text": "The same session still carries the reasoning, assumptions, and context that produced the code, so it is more likely to rationalize its own prior decisions than a context that never saw them." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "Requesting a different tone or persona does not remove the accumulated context and reasoning already in that session's history; the same assumptions that led to the original implementation choices are still present and can bias a same-session review toward confirming them.",
+    "optionExplanations": {
+      "a": "A persona change is a instruction about tone, not a substitute for an independent context free of the generating session's assumptions.",
+      "b": "The core issue is the shared context and assumptions carried over from generation, which applies regardless of how large or small the diff is.",
+      "c": "The limitation is not that a different persona cannot be adopted, but that adopting one does not create genuine independence from prior context.",
+      "d": "This correctly identifies the mechanism: the same accumulated reasoning and assumptions persist regardless of the requested tone, biasing the review toward the original decisions."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/features-overview", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 3 - common misconceptions"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "claude-code-config-017",
+    "status": "reviewed",
+    "topic": "CLAUDE.md is not an enforcement control",
+    "difficulty": "Intermediate",
+    "tags": ["claude-code-configuration-workflows", "claude-md-scope"],
+    "question": "A security team proposes writing \"never write files outside of src/\" into CLAUDE.md and treating that instruction as a guaranteed compliance control equivalent to a filesystem permission restriction. What is the flaw in this plan?",
+    "options": [
+      { "id": "a", "text": "CLAUDE.md cannot contain any instructions about file paths at all." },
+      { "id": "b", "text": "There is no flaw; instructions in CLAUDE.md are enforced identically to operating-system file permissions." },
+      { "id": "c", "text": "CLAUDE.md content is guidance the model reads and generally follows, not a deterministic, enforced permission boundary the way filesystem or tool-level permissions are." },
+      { "id": "d", "text": "The instruction would only take effect if it were also duplicated into every skill file in the repository." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "CLAUDE.md provides guidance that shapes behavior, but it is not a hard, deterministic enforcement mechanism. A genuine compliance boundary needs an actual permission or access-control mechanism outside of instructional guidance the model is asked to follow.",
+    "optionExplanations": {
+      "a": "CLAUDE.md can absolutely describe file-path conventions; the issue is relying on that description as a hard compliance guarantee, not whether it is allowed to mention paths.",
+      "b": "Treating instructional guidance as equivalent to an enforced permission boundary is exactly the misconception the scenario describes; they are not equivalent.",
+      "c": "This correctly distinguishes guidance (CLAUDE.md) from enforcement (an actual permission/access-control mechanism), which is the real gap in treating the instruction as a guaranteed control.",
+      "d": "Duplicating the instruction elsewhere does not convert guidance into enforcement; the underlying gap remains."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/memory", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 3 - common misconceptions"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "claude-code-config-018",
+    "status": "reviewed",
+    "topic": "Directory-level guidance in a monorepo",
+    "difficulty": "Foundational",
+    "tags": ["claude-code-configuration-workflows", "instruction-scope"],
+    "question": "A monorepo has a mobile-app package with its own build tooling and release process that no other package in the repository uses. Where should guidance specific to that package's build and release steps live?",
+    "options": [
+      { "id": "a", "text": "In each individual developer's user-scope memory, so it can vary by person." },
+      { "id": "b", "text": "In the top-level, repository-wide CLAUDE.md, since all guidance must live in a single top-level file." },
+      { "id": "c", "text": "In a directory-level CLAUDE.md (or equivalent localized guidance) placed within the mobile-app package, so it applies only when work touches that package." },
+      { "id": "d", "text": "Nowhere; package-specific build guidance cannot be configured for Claude Code." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "Directory-level guidance lets instructions that are only relevant to one package live close to that package and load only when work actually touches it, rather than becoming repository-wide noise or being scattered across individual developers' personal configuration.",
+    "optionExplanations": {
+      "a": "Build and release conventions are properties of the package, not of an individual developer, so user scope is the wrong place for them.",
+      "b": "Placing package-specific detail in the top-level file spreads irrelevant guidance into every task across the whole monorepo, not just the mobile-app package.",
+      "c": "This matches the intended use of directory-level guidance: localized instructions for one package, scoped to where they are actually relevant.",
+      "d": "Directory-level (localized) guidance is a supported way to configure package-specific instructions in a monorepo."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/memory", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 3 - instruction scope"],
+    "baseWeight": 1
+  },
+  {
+    "id": "claude-code-config-019",
+    "status": "reviewed",
+    "topic": "Skills for on-demand workflows",
+    "difficulty": "Intermediate",
+    "tags": ["claude-code-configuration-workflows", "skills-vs-claude-md"],
+    "question": "A team repeatedly asks Claude Code to perform the same multi-step incident postmortem process (gather timeline, identify contributing factors, draft a remediation list) only after a production incident occurs, a few times per quarter. What is the best way to make this repeatable without loading it into every session?",
+    "options": [
+      { "id": "a", "text": "Have someone manually retype the full procedure from memory each time an incident happens." },
+      { "id": "b", "text": "Add the entire postmortem procedure to the top-level CLAUDE.md so it is always loaded, even outside of incidents." },
+      { "id": "c", "text": "Package the postmortem process as a skill that is invoked on demand when an incident actually occurs." },
+      { "id": "d", "text": "Store the procedure only in one engineer's personal notes, outside of Claude Code entirely." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "A skill packages a detailed, multi-step procedure that is only needed in specific situations and loads it on demand, avoiding the cost of always-on guidance while still making the procedure reliably repeatable when it is actually needed.",
+    "optionExplanations": {
+      "a": "Manual retyping from memory is unreliable and defeats the purpose of having Claude Code able to run a defined, repeatable workflow.",
+      "b": "Always-on CLAUDE.md guidance would load the full postmortem procedure into every session, even the vast majority that have nothing to do with an incident.",
+      "c": "This is exactly the intended use of skills: an on-demand, repeatable workflow that loads only when invoked, not on every task.",
+      "d": "Keeping the procedure outside Claude Code entirely means it cannot be invoked as part of a session and is not shared reliably with the rest of the team."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/features-overview", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 3 - skills vs. CLAUDE.md"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "claude-code-config-020",
+    "status": "reviewed",
+    "topic": "Designing a CI review architecture",
+    "difficulty": "Advanced",
+    "tags": ["claude-code-configuration-workflows", "independent-review"],
+    "question": "A team wants their CI pipeline to use Claude Code both to generate a fix for a failing build and to provide a genuinely independent sanity check on that fix before merge, all running non-interactively. How should this pipeline step be architected?",
+    "options": [
+      { "id": "a", "text": "Run one non-interactive invocation that both generates the fix and reviews it in the same context, then post the combined output as the review." },
+      { "id": "b", "text": "Skip the review step in CI and rely on the same generation invocation's own confidence statement as sufficient sign-off." },
+      { "id": "c", "text": "Run the generation step interactively so a human can review it live, defeating the requirement for unattended CI." },
+      { "id": "d", "text": "Run a non-interactive generation step, then a second, separate non-interactive invocation (a fresh context) that receives only the diff and evaluates it independently, without inheriting the first invocation's reasoning." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "Combining generation and review in one pass, non-interactive or not, reintroduces the same-context bias that limits self-review. A genuinely independent check needs a separate invocation that only sees the resulting diff, not the reasoning that produced it, while still running unattended via print mode.",
+    "optionExplanations": {
+      "a": "A single combined context still carries the generating reasoning forward into its own \"review,\" undermining independence even though it is non-interactive.",
+      "b": "A confidence statement from the same context that produced the fix is not an independent check and does not substitute for a separate review pass.",
+      "c": "The requirement is explicitly for unattended, non-interactive execution; introducing an interactive step abandons that requirement.",
+      "d": "This matches sound CI review architecture: unattended generation, then a genuinely separate unattended review context evaluating only the diff."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/cli-reference", "https://code.claude.com/docs/en/features-overview", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 3 - independent review"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "prompt-eng-structured-001",
+    "status": "reviewed",
+    "topic": "Explicit acceptance criteria",
+    "difficulty": "Foundational",
+    "tags": ["prompt-engineering-structured-output", "explicit-criteria"],
+    "question": "A prompt instructs a model to flag support tickets that are \"clearly urgent\" and to \"be conservative\" about what counts as urgent. Reviewers keep disagreeing with the model's flags. What is the most likely reason?",
+    "options": [
+      { "id": "a", "text": "\"Clearly urgent\" and \"be conservative\" are subjective phrases that do not specify concrete inclusion, exclusion, or severity criteria, so different runs (and different reviewers) can reasonably disagree about what qualifies." },
+      { "id": "b", "text": "The model is incapable of ever classifying support tickets by urgency under any prompt." },
+      { "id": "c", "text": "Reviewers should stop checking the model's output, since disagreement means the reviewers are wrong." },
+      { "id": "d", "text": "The ticket volume is too high for any classification task, regardless of how the prompt is worded." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "Instructions like \"clearly urgent\" or \"be conservative\" sound like guidance but do not define concrete, checkable criteria. Replacing them with explicit inclusion, exclusion, and severity rules gives both the model and reviewers a shared, checkable standard.",
+    "optionExplanations": {
+      "a": "This identifies the actual gap: the wording gives a tone, not an operational definition, so it is naturally open to disagreement.",
+      "b": "The task is achievable; the problem is the vagueness of the current criteria, not a fundamental incapability.",
+      "c": "Reviewer disagreement here is a signal that the criteria are underspecified, not evidence that the reviewers themselves are at fault.",
+      "d": "Volume does not explain disagreement about whether a given ticket meets an undefined bar for \"urgent\"."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-tools", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 4 - explicit criteria"],
+    "baseWeight": 1
+  },
+  {
+    "id": "prompt-eng-structured-002",
+    "status": "reviewed",
+    "topic": "Designing inclusion, exclusion, and severity criteria",
+    "difficulty": "Foundational",
+    "tags": ["prompt-engineering-structured-output", "explicit-criteria"],
+    "question": "A content-moderation prompt needs to decide whether a product review should be flagged for manual review. Which instruction gives the model the most actionable guidance?",
+    "options": [
+      { "id": "a", "text": "\"Use your best judgment about what seems inappropriate.\"" },
+      { "id": "b", "text": "\"Flag the review if it contains a competitor's name, a request for off-platform contact, or profanity; do not flag reviews that only criticize product quality; treat any flagged review as low, medium, or high severity based on the specific rule it triggered.\"" },
+      { "id": "c", "text": "\"Be strict, but not too strict, when deciding what to flag.\"" },
+      { "id": "d", "text": "\"Flag anything that could possibly be a problem for anyone.\"" }
+    ],
+    "correctOptionId": "b",
+    "explanation": "Naming exactly which conditions require flagging, which conditions are explicitly excluded, and how severity maps to specific triggers turns a vague moderation judgment call into a checkable, reproducible rule set.",
+    "optionExplanations": {
+      "a": "\"Best judgment\" and \"seems inappropriate\" provide no concrete inclusion or exclusion criteria to apply consistently.",
+      "b": "This defines explicit inclusion conditions, an explicit exclusion condition, and a severity mapping, matching the guidance to replace vague quality language with concrete criteria.",
+      "c": "\"Strict, but not too strict\" is a tone description, not a checkable rule, and gives no way to resolve borderline cases consistently.",
+      "d": "An unbounded \"anything that could possibly be a problem\" standard has no exclusion criteria and will over-flag unpredictably."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-tools", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 4 - explicit criteria"],
+    "baseWeight": 1
+  },
+  {
+    "id": "prompt-eng-structured-003",
+    "status": "reviewed",
+    "topic": "Targeted few-shot examples",
+    "difficulty": "Intermediate",
+    "tags": ["prompt-engineering-structured-output", "few-shot-selection"],
+    "question": "A classification prompt performs well except on a specific ambiguous boundary: reviews that are sarcastic compliments versus reviews that are genuine compliments. What is the most effective way to improve accuracy on this specific boundary?",
+    "options": [
+      { "id": "a", "text": "Add a few targeted examples that specifically illustrate the sarcastic-versus-genuine boundary and how each should be classified." },
+      { "id": "b", "text": "Add fifty generic examples covering many unrelated review types." },
+      { "id": "c", "text": "Remove all examples from the prompt, since examples are unnecessary for classification tasks." },
+      { "id": "d", "text": "Increase the temperature setting so the model considers more possibilities." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "A small set of examples chosen specifically at the observed failure boundary teaches the model the exact distinction it is missing, which is far more effective than a large number of examples that do not target the actual ambiguity.",
+    "optionExplanations": {
+      "a": "This directly targets the documented boundary with examples that demonstrate the distinction, matching the guidance to use a small, targeted few-shot set at observed failure boundaries.",
+      "b": "A large number of generic examples that do not address the specific sarcasm-versus-genuine boundary dilutes attention without resolving the actual failure.",
+      "c": "Removing examples entirely discards a tool well-suited to teaching exactly this kind of ambiguous-boundary judgment.",
+      "d": "Temperature affects output randomness, not whether the model has been shown the specific distinction it is currently missing."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-tools", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 4 - few-shot selection"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "prompt-eng-structured-004",
+    "status": "reviewed",
+    "topic": "Overloading prompts with generic examples",
+    "difficulty": "Intermediate",
+    "tags": ["prompt-engineering-structured-output", "few-shot-selection"],
+    "question": "After noticing one ambiguous classification boundary, a developer adds forty generic examples spanning many unrelated cases in hopes that \"more examples always help.\" What is the likely result?",
+    "options": [
+      { "id": "a", "text": "Accuracy is guaranteed to improve proportionally with the number of examples added." },
+      { "id": "b", "text": "The forty examples will make the actual ambiguous boundary far easier to identify, since more volume increases signal." },
+      { "id": "c", "text": "Adding many unrelated examples adds cost and dilution without directly demonstrating the specific boundary that was actually failing, and may not improve (or could even hurt) performance on that particular case." },
+      { "id": "d", "text": "The prompt will fail to run at all once it contains more than a small number of examples." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "Volume of examples is not the same as relevance. A large set of generic examples spends context and attention without necessarily addressing the one boundary that was actually causing errors, unlike a few examples chosen specifically at that boundary.",
+    "optionExplanations": {
+      "a": "More examples do not guarantee proportional improvement, especially when they do not target the specific failure observed.",
+      "b": "Generic volume does not automatically clarify a specific ambiguous distinction; targeted examples at that exact boundary do.",
+      "c": "This correctly identifies the misconception: quantity is not a substitute for relevance, and unrelated examples can dilute attention rather than help.",
+      "d": "There is no such hard failure threshold; the issue is effectiveness and cost, not the prompt refusing to execute."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-tools", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 4 - common misconceptions"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "prompt-eng-structured-005",
+    "status": "reviewed",
+    "topic": "When to use structured outputs or tool schemas",
+    "difficulty": "Foundational",
+    "tags": ["prompt-engineering-structured-output", "structured-output"],
+    "question": "A downstream service requires every model response to parse as a specific JSON shape with required fields, and any malformed response breaks the pipeline. What is the best way to produce this output?",
+    "options": [
+      { "id": "a", "text": "Use structured outputs or a strict tool/response schema so the response conforms to the required shape, rather than relying on free-form prose the consumer must parse." },
+      { "id": "b", "text": "Ask the model politely to \"please return valid JSON\" in prose and hope it complies every time." },
+      { "id": "c", "text": "Return prose and have the downstream service use best-effort regular expressions to extract fields." },
+      { "id": "d", "text": "Avoid specifying any format at all, since the consumer can adapt to whatever shape is returned." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "When a consumer requires a guaranteed shape, structured outputs or a strict schema are the right mechanism, since they constrain the response format directly rather than depending on the model reliably following a prose instruction.",
+    "optionExplanations": {
+      "a": "This matches the intended use: a strict schema mechanism guarantees the shape the pipeline depends on.",
+      "b": "A polite prose request does not guarantee conformance the way a strict schema mechanism does, and any deviation would break the pipeline.",
+      "c": "Best-effort regex parsing of prose is fragile compared to a guaranteed structured format and is likely to break on unexpected phrasing.",
+      "d": "Leaving the format unspecified is exactly the situation the pipeline cannot tolerate, since it requires a specific required shape."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/build-with-claude/structured-outputs", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 4 - structured output"],
+    "baseWeight": 1
+  },
+  {
+    "id": "prompt-eng-structured-006",
+    "status": "reviewed",
+    "topic": "Syntactic validity versus semantic truth",
+    "difficulty": "Intermediate",
+    "tags": ["prompt-engineering-structured-output", "structured-output"],
+    "question": "An extraction pipeline uses a strict JSON schema and every response validates successfully against it. A later audit finds that several extracted dollar amounts are simply wrong, even though the JSON was well-formed the entire time. What does this indicate?",
+    "options": [
+      { "id": "a", "text": "This is impossible; schema validation guarantees the extracted values are also factually correct." },
+      { "id": "b", "text": "Schema conformance only guarantees the response has the correct shape and types; it says nothing about whether the actual values are semantically accurate, so validated output still needs a separate correctness check." },
+      { "id": "c", "text": "The schema must have been misconfigured, since a correct schema always prevents wrong values." },
+      { "id": "d", "text": "The dollar amounts must have been corrupted after the model generated them, since the model cannot produce a wrong value inside a valid schema." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "A schema constrains structure and types (shape), not the truth of the values inside it. Valid JSON or strict schema compliance is a necessary condition for a well-formed response, not a sufficient one for correctness, so semantic validation remains a separate concern.",
+    "optionExplanations": {
+      "a": "Schema validation checks shape and type, not factual correctness; it is entirely possible for a well-formed value to still be wrong.",
+      "b": "This correctly separates the two concerns: structural conformance versus semantic accuracy, and states that the latter needs its own check.",
+      "c": "No schema, however well configured, can enforce that a numeric field's specific value matches ground truth; that is outside what schema validation checks.",
+      "d": "There is no need to assume post-generation corruption; a model can produce a structurally valid but factually wrong value directly."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/build-with-claude/structured-outputs", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 4 - common misconceptions"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "prompt-eng-structured-007",
+    "status": "reviewed",
+    "topic": "Modeling missing or ambiguous data",
+    "difficulty": "Intermediate",
+    "tags": ["prompt-engineering-structured-output", "missing-data-modeling"],
+    "question": "An extraction schema includes a required `shipping_date` field, but many source invoices simply never mention a shipping date at all. What is the best way to model this in the schema and prompt?",
+    "options": [
+      { "id": "a", "text": "Make `shipping_date` nullable/optional (or allow an explicit value such as `unclear`) and instruct the model to use it only when the source genuinely lacks the information, rather than forcing a fabricated date." },
+      { "id": "b", "text": "Keep the field required and instruct the model to make its best guess at a plausible date whenever one is missing." },
+      { "id": "c", "text": "Remove the field entirely from the schema, since it cannot always be filled in." },
+      { "id": "d", "text": "Keep the field required and reject any invoice that lacks a shipping date from processing entirely." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "When source data may genuinely be absent, the schema should allow that absence to be represented explicitly (nullable, optional, or an explicit unclear value) rather than forcing the model to invent a value just to satisfy a required field.",
+    "optionExplanations": {
+      "a": "This correctly models genuine absence as an explicit, allowed state instead of forcing fabrication to satisfy a required field.",
+      "b": "Requiring a guessed date when the source has none manufactures a plausible-looking but fabricated value, which is the exact failure mode to avoid.",
+      "c": "Removing the field loses the ability to record a shipping date on the (likely common) invoices that do state one.",
+      "d": "Rejecting every invoice that lacks the field discards otherwise-usable data over a single missing, non-essential field."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/build-with-claude/structured-outputs", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 4 - missing data modeling"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "prompt-eng-structured-008",
+    "status": "reviewed",
+    "topic": "Forcing fabrication with required fields",
+    "difficulty": "Intermediate",
+    "tags": ["prompt-engineering-structured-output", "missing-data-modeling"],
+    "question": "A schema marks every extracted field, including a rarely-mentioned `warranty_period`, as required. On documents that never state a warranty period, what is the likely consequence?",
+    "options": [
+      { "id": "a", "text": "The model will consistently leave the field blank, which will always pass schema validation." },
+      { "id": "b", "text": "The document will always be rejected outright with no output produced." },
+      { "id": "c", "text": "The model is likely to fabricate a plausible-sounding warranty period to satisfy the required field, introducing invented values that are indistinguishable from genuinely extracted ones." },
+      { "id": "d", "text": "The schema will automatically convert the field to optional at runtime whenever the value is missing." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "Marking a frequently-absent field as required pressures the model to produce some value even when the source has none, which tends to manifest as fabricated but plausible-looking content that is hard to distinguish from a true extraction.",
+    "optionExplanations": {
+      "a": "Leaving a required field blank typically fails schema validation, since \"required\" means a value must be present.",
+      "b": "Nothing in the scenario indicates automatic rejection; the more common failure mode is fabrication to satisfy the requirement.",
+      "c": "This correctly identifies the realistic consequence: pressure to fill a required field the source does not support tends to produce fabricated values.",
+      "d": "Schemas do not dynamically loosen their own constraints at runtime; the required constraint stays exactly as configured."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/build-with-claude/structured-outputs", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 4 - common misconceptions"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "prompt-eng-structured-009",
+    "status": "reviewed",
+    "topic": "Recovering from correctable extraction failures",
+    "difficulty": "Advanced",
+    "tags": ["prompt-engineering-structured-output", "retry-vs-abstain"],
+    "question": "An extraction attempt returns a value that fails a downstream validation check (a date field formatted incorrectly), but the source document clearly contains the correct date in a different format. What is the best next step?",
+    "options": [
+      { "id": "a", "text": "Retry the extraction, providing the original evidence, the failed output, and the specific validation feedback describing what was wrong, so the model can correct the formatting." },
+      { "id": "b", "text": "Give up immediately and mark the field permanently unrecoverable." },
+      { "id": "c", "text": "Retry with no additional information, hoping a different sample produces a differently formatted result." },
+      { "id": "d", "text": "Escalate to a human reviewer immediately without ever attempting a corrective retry." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "When the evidence needed to succeed is actually present, a correctable failure should be retried with the specific context of what went wrong (the original evidence, the failed output, and concrete validation feedback), which gives the model what it needs to fix the exact problem rather than repeat it.",
+    "optionExplanations": {
+      "a": "This matches the correctable-failure recovery pattern: retry with the evidence, the failed attempt, and specific feedback about what needs to change.",
+      "b": "Abandoning the field is premature when the source data needed to succeed is actually present and the failure is a fixable formatting issue.",
+      "c": "Retrying without any of the failure information discards the most useful signal for correcting the exact mistake.",
+      "d": "Immediate escalation skips a straightforward, likely-successful correction when the evidence needed is already available."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 4 - correctable failure recovery"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "prompt-eng-structured-010",
+    "status": "reviewed",
+    "topic": "When not to retry",
+    "difficulty": "Advanced",
+    "tags": ["prompt-engineering-structured-output", "retry-vs-abstain"],
+    "question": "An extraction pipeline is asked to find a customer's loyalty-tier value on an invoice, but the invoice simply never mentions loyalty tier anywhere. The pipeline is configured to retry up to five times whenever a field comes back empty. What is the problem with this configuration for this specific field?",
+    "options": [
+      { "id": "a", "text": "There is no problem; retries always eventually succeed given enough attempts." },
+      { "id": "b", "text": "Retrying repeatedly cannot produce a value the source document never contained, so the pipeline should instead return uncertainty (or route to review) rather than retry indefinitely on genuinely absent evidence." },
+      { "id": "c", "text": "The retries should be increased to ten instead of five to guarantee success." },
+      { "id": "d", "text": "The field should be marked required so retries are no longer necessary." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "Retrying is only useful when the needed evidence exists and a different attempt could plausibly find it. When the source genuinely lacks the information, no number of retries can manufacture a real answer, so the correct response is to return uncertainty or escalate rather than keep retrying.",
+    "optionExplanations": {
+      "a": "Retries cannot succeed against evidence that does not exist; more attempts do not change what the source document actually contains.",
+      "b": "This correctly diagnoses the issue: retrying is the wrong response to genuinely absent evidence, and uncertainty/escalation is the appropriate path instead.",
+      "c": "Increasing the retry count does not address the root cause and wastes cost and latency retrying against information that isn't there.",
+      "d": "Making the field required would only pressure the model to fabricate a value, which is a worse outcome than acknowledging genuine absence."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 4 - common misconceptions"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "prompt-eng-structured-011",
+    "status": "reviewed",
+    "topic": "Choosing Message Batches",
+    "difficulty": "Foundational",
+    "tags": ["prompt-engineering-structured-output", "batch-suitability"],
+    "question": "A team needs to classify two million archived support tickets overnight, with results only needed by the next morning and no requirement for any individual result to return quickly. Which approach fits best?",
+    "options": [
+      { "id": "a", "text": "The synchronous Messages API, issuing all two million requests as fast as possible one after another." },
+      { "id": "b", "text": "The Message Batches API, since this is latency-tolerant, high-volume work with no blocking requirement on individual results." },
+      { "id": "c", "text": "A single oversized synchronous request that bundles all two million tickets into one prompt." },
+      { "id": "d", "text": "Manual human classification, since automated approaches cannot handle this volume." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "Message Batches are designed for exactly this kind of large-volume, latency-tolerant workload, where results are not needed immediately and no single request needs to block on a fast response.",
+    "optionExplanations": {
+      "a": "Issuing millions of synchronous requests individually is a poor fit when the workload is explicitly latency-tolerant and batch processing is available.",
+      "b": "This matches the described workload precisely: high volume, overnight timeline, no blocking requirement — the intended use case for Message Batches.",
+      "c": "Bundling two million tickets into a single request is not how the API is designed to scale and would exceed practical input limits.",
+      "d": "The volume and nature of the task (bulk classification) is well suited to automated batch processing, not manual human effort."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/api/messages/batches", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 4 - batch suitability"],
+    "baseWeight": 1
+  },
+  {
+    "id": "prompt-eng-structured-012",
+    "status": "reviewed",
+    "topic": "Synchronous versus batch for blocking workflows",
+    "difficulty": "Intermediate",
+    "tags": ["prompt-engineering-structured-output", "batch-suitability"],
+    "question": "A pre-merge CI gate needs an immediate pass/fail decision from a model-based check before it can allow a pull request to merge. Which processing approach fits this requirement?",
+    "options": [
+      { "id": "a", "text": "The Message Batches API, since batch processing is always the more cost-efficient choice regardless of latency needs." },
+      { "id": "b", "text": "The synchronous Messages API, since the pipeline is explicitly blocking and needs the result before the gate can proceed." },
+      { "id": "c", "text": "Whichever approach happens to be configured by default, since the choice does not affect a blocking gate." },
+      { "id": "d", "text": "A batch request submitted without checking on its completion, since the gate can proceed without ever needing the result." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "A pre-merge gate is a blocking workflow: the pipeline cannot proceed until the result is available. Message Batches are designed for asynchronous, latency-tolerant processing and are a poor fit for a step that must block on an immediate result.",
+    "optionExplanations": {
+      "a": "Cost efficiency does not override the hard requirement that this specific gate needs an immediate, blocking result.",
+      "b": "This matches the blocking nature of a pre-merge gate: a synchronous call that returns the result the gate needs before proceeding.",
+      "c": "The choice directly affects whether the gate can get its result in time; it is not interchangeable for a blocking use case.",
+      "d": "A merge gate must have the result to make its pass/fail decision; proceeding without it defeats the purpose of the gate entirely."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/api/messages/batches", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 4 - common misconceptions"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "prompt-eng-structured-013",
+    "status": "reviewed",
+    "topic": "Correlating batch results",
+    "difficulty": "Intermediate",
+    "tags": ["prompt-engineering-structured-output", "batch-correlation"],
+    "question": "A developer submits ten thousand requests as a Message Batch and, once results are returned, matches each result to its original request by assuming the results arrive in the same order the requests were submitted. What is wrong with this approach?",
+    "options": [
+      { "id": "a", "text": "Batches cannot contain more than a few hundred requests, so this batch would already have failed to submit." },
+      { "id": "b", "text": "Nothing is wrong; batch results are always returned in the exact order submitted." },
+      { "id": "c", "text": "Batch results are not guaranteed to be returned in request order, so correlation must instead be done using each request's `custom_id`, not positional order." },
+      { "id": "d", "text": "Result correlation is unnecessary, since every batch result is identical regardless of the original request." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "Message Batch results are not guaranteed to preserve submission order; correlating each result back to its originating request requires matching on the request's `custom_id`, which is the documented, reliable mechanism for this.",
+    "optionExplanations": {
+      "a": "Message Batches are designed to support large volumes of requests; ten thousand is well within their intended use, not a limit violation.",
+      "b": "Order is explicitly not guaranteed for batch results; assuming otherwise risks silently mismatching requests and results.",
+      "c": "This correctly identifies both the misconception (assuming order is preserved) and the correct mechanism (`custom_id` correlation).",
+      "d": "Each result corresponds to its own distinct request and can differ meaningfully; they are not interchangeable or identical."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/api/messages/batches", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 4 - common misconceptions"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "prompt-eng-structured-014",
+    "status": "reviewed",
+    "topic": "Independent multi-pass review",
+    "difficulty": "Advanced",
+    "tags": ["prompt-engineering-structured-output", "review-architecture"],
+    "question": "A single review pass over a large, multi-file extraction output is expected to both check each file's internal consistency and catch conflicts between values across different files, but reviewers report that cross-file conflicts are consistently missed. What is the best structural fix?",
+    "options": [
+      { "id": "a", "text": "Increase the length of the single review pass's instructions so it tries harder to catch everything at once." },
+      { "id": "b", "text": "Have the same single pass repeat its own output back to itself twice in a row." },
+      { "id": "c", "text": "Remove the cross-file check entirely, since a single pass cannot reasonably be expected to catch it." },
+      { "id": "d", "text": "Separate the review into two passes: one focused on local, per-file consistency, and a second, independent pass focused specifically on cross-file integration and conflicts." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "A single large pass that tries to hold both local, per-file detail and broader cross-file relationships in attention at once tends to dilute focus on one or the other. Splitting local and integration review into separate, independent passes lets each concentrate on what it is actually checking for.",
+    "optionExplanations": {
+      "a": "Longer instructions do not resolve the underlying attention-dilution problem of asking one pass to track both local detail and cross-file relationships simultaneously.",
+      "b": "Repeating the same single pass twice does not introduce the missing focus on cross-file relationships; it just runs the same diluted check again.",
+      "c": "Removing the check discards a real quality requirement instead of fixing the review structure that is failing to catch it.",
+      "d": "This matches the intended fix: separate local per-file review from cross-file integration review so each pass can focus on its own concern."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-tools", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 4 - review architecture"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "prompt-eng-structured-015",
+    "status": "reviewed",
+    "topic": "Local versus integration review scope",
+    "difficulty": "Advanced",
+    "tags": ["prompt-engineering-structured-output", "review-architecture"],
+    "question": "A team designs a two-pass review: pass one checks that each extracted document's own fields are internally consistent; pass two compares extracted values for the same entity across all documents to catch conflicting values. Why is this split more effective than one combined pass covering both concerns?",
+    "options": [
+      { "id": "a", "text": "It is not more effective; combining both concerns into one pass always performs identically." },
+      { "id": "b", "text": "The split is only useful when there are fewer than ten documents involved." },
+      { "id": "c", "text": "Each pass can concentrate its attention on a distinct scope (a single document's internal consistency versus relationships across many documents), rather than diluting attention across both concerns within one pass." },
+      { "id": "d", "text": "Two-pass review is required only because single-pass review is not technically supported by the platform." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "Local per-file review and cross-file integration review are different kinds of attention: one is about a single document's self-consistency, the other about relationships across many documents. Separating them lets each pass do its specific job well instead of splitting focus within a single pass.",
+    "optionExplanations": {
+      "a": "The scenario is set up specifically because a single combined pass under-performs on cross-file conflicts, so the split is not equivalent.",
+      "b": "The value of separating local from integration review does not depend on a specific small document count; it applies broadly whenever local and cross-document concerns differ.",
+      "c": "This correctly explains why the split works: each pass concentrates on a distinct scope instead of diluting attention across both.",
+      "d": "Single-pass review is technically usable; the reason to split is effectiveness on distinct concerns, not a platform limitation."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-tools", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 4 - review architecture"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "prompt-eng-structured-016",
+    "status": "reviewed",
+    "topic": "Diagnosing an ineffective prompt",
+    "difficulty": "Foundational",
+    "tags": ["prompt-engineering-structured-output", "explicit-criteria"],
+    "question": "Which of the following prompts is most likely to produce a reliably consistent, checkable classification of customer feedback as \"positive,\" \"neutral,\" or \"negative\"?",
+    "options": [
+      { "id": "a", "text": "\"Classify the sentiment however makes the most sense to you.\"" },
+      { "id": "b", "text": "\"Decide the general vibe of the feedback and describe it briefly.\"" },
+      { "id": "c", "text": "\"Consider the tone and let your intuition guide the label.\"" },
+      { "id": "d", "text": "\"Classify the feedback as exactly one of \\\"positive\\\", \\\"neutral\\\", or \\\"negative\\\" using this rule: negative if it mentions a problem with the product or service without also praising it; positive if it praises the product or service without mentioning a problem; neutral otherwise.\"" }
+    ],
+    "correctOptionId": "d",
+    "explanation": "An explicit, closed label set paired with a concrete, checkable rule for choosing among them produces far more consistent results than open-ended, subjective instructions that leave both the label set and the criteria undefined.",
+    "optionExplanations": {
+      "a": "Leaving the decision entirely to \"whatever makes sense\" defines neither the label set nor the criteria for choosing among labels.",
+      "b": "A free-text \"vibe\" description is not a checkable, closed classification and is hard to validate or aggregate consistently.",
+      "c": "\"Intuition\" is not a specified, reproducible criterion and gives no concrete rule to apply the same way every time.",
+      "d": "This defines both the exact label set and an explicit, checkable rule for selecting among them, matching the guidance to replace vague quality instructions with concrete criteria."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-tools", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 4 - explicit criteria"],
+    "baseWeight": 1
+  },
+  {
+    "id": "prompt-eng-structured-017",
+    "status": "reviewed",
+    "topic": "Critiquing a tool/response schema",
+    "difficulty": "Intermediate",
+    "tags": ["prompt-engineering-structured-output", "structured-output"],
+    "question": "A schema for extracting invoice line items defines `amount` as a required string field with no format constraint, and `currency` is entirely absent from the schema. Consumers report ambiguous and inconsistent amounts. What is the best schema critique?",
+    "options": [
+      { "id": "a", "text": "The `amount` field should be removed entirely, since invoices do not reliably contain amounts." },
+      { "id": "b", "text": "The schema is fine as written; ambiguity in downstream consumption is unrelated to how the schema defines these fields." },
+      { "id": "c", "text": "The schema should constrain `amount` to a well-defined numeric/format type and add an explicit `currency` field, since an unconstrained string and a missing currency both leave room for ambiguous or inconsistent values." },
+      { "id": "d", "text": "The schema should make every field in the entire object optional to avoid any future validation failures." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "An unconstrained string type for a numeric value invites inconsistent formatting, and omitting `currency` entirely leaves a critical piece of context out of the structured result. Tightening the type and adding the missing field directly addresses the reported ambiguity.",
+    "optionExplanations": {
+      "a": "Removing the field entirely discards the core data being extracted instead of fixing its definition.",
+      "b": "The reported inconsistency traces directly to how loosely the schema defines these fields, so the schema is not unrelated to the problem.",
+      "c": "This directly targets the two concrete schema gaps causing the reported ambiguity: an unconstrained amount type and a missing currency field.",
+      "d": "Making every field optional does not address the specific format and missing-field issues raised, and would weaken guarantees on unrelated fields for no benefit."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/build-with-claude/structured-outputs", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 4 - structured output"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "prompt-eng-structured-018",
+    "status": "reviewed",
+    "topic": "Diagnosing an extraction failure",
+    "difficulty": "Intermediate",
+    "tags": ["prompt-engineering-structured-output", "retry-vs-abstain"],
+    "question": "An extraction run returns a `total_amount` field that fails validation because it includes a currency symbol the numeric schema does not accept, even though the correct numeric value is clearly present in the source document. What is the appropriate classification of this failure and next step?",
+    "options": [
+      { "id": "a", "text": "This is an unrecoverable failure; the field should be marked permanently unavailable." },
+      { "id": "b", "text": "This requires escalating to a human reviewer immediately, without ever attempting a targeted retry." },
+      { "id": "c", "text": "This indicates the source document itself is invalid and should be discarded entirely." },
+      { "id": "d", "text": "This is a correctable formatting failure, since the correct value is present in the source; retry with the specific validation feedback about the currency symbol so the model can output a clean numeric value." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "The underlying evidence is present and correct; the failure is a formatting mismatch with the schema, which is exactly the kind of correctable failure that should be retried with specific feedback about what needs to change, rather than treated as unrecoverable or requiring escalation.",
+    "optionExplanations": {
+      "a": "The value is available in the source; this is not an unrecoverable absence, just a formatting issue that can be corrected.",
+      "b": "Escalating a straightforward, correctable formatting issue skips a likely-successful automated fix that specific feedback would resolve.",
+      "c": "The document itself is not invalid; only the extracted formatting needs correction, not the source data.",
+      "d": "This correctly classifies the failure as correctable and applies the appropriate recovery step: retry with targeted validation feedback."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 4 - correctable failure recovery"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "prompt-eng-structured-019",
+    "status": "reviewed",
+    "topic": "Assessing batch suitability",
+    "difficulty": "Intermediate",
+    "tags": ["prompt-engineering-structured-output", "batch-suitability"],
+    "question": "A product team wants to re-score five hundred thousand historical product descriptions against a new quality rubric, with the results due in a report next week, and no individual score needs to be available immediately. Which processing choice is most appropriate, and why?",
+    "options": [
+      { "id": "a", "text": "Synchronous requests issued one at a time, because synchronous processing is inherently more accurate than batch processing." },
+      { "id": "b", "text": "Neither approach; a workload of this size cannot be processed through the API at all." },
+      { "id": "c", "text": "Synchronous requests, because Message Batches cannot be used for scoring or classification tasks." },
+      { "id": "d", "text": "Message Batches, because the task is large-volume and latency-tolerant, with no requirement for any individual result to return immediately." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "The described workload — high volume, no immediate per-result deadline, results due on a multi-day timeline — is exactly the profile Message Batches are designed for, offering an efficient way to process large amounts of latency-tolerant work.",
+    "optionExplanations": {
+      "a": "Accuracy is not inherently tied to synchronous versus batch processing; the choice here should be driven by volume and latency tolerance.",
+      "b": "The API is designed to support workloads at this scale, particularly through batch processing; the task is well within intended usage.",
+      "c": "Message Batches support the same range of request types as synchronous calls, including scoring and classification; there is no such restriction.",
+      "d": "This correctly matches the workload's actual characteristics (large volume, latency-tolerant) to the processing approach designed for them."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/api/messages/batches", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 4 - batch suitability"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "prompt-eng-structured-020",
+    "status": "reviewed",
+    "topic": "Designing multi-pass review trade-offs",
+    "difficulty": "Advanced",
+    "tags": ["prompt-engineering-structured-output", "review-architecture"],
+    "question": "A team is deciding how to review a large batch of extracted contract clauses: a single reviewer pass that checks everything at once, or separate independent passes for clause-level correctness and for cross-contract consistency, run as distinct review instances. What consideration should most influence this decision?",
+    "options": [
+      { "id": "a", "text": "Whichever option is faster to set up initially, regardless of the quality difference between the two." },
+      { "id": "b", "text": "Multi-pass review should be avoided entirely, since running more than one review instance is never justified." },
+      { "id": "c", "text": "The number of contracts is irrelevant to this decision; a single pass is always sufficient regardless of scale." },
+      { "id": "d", "text": "Whether a single combined pass is likely to dilute attention across meaningfully distinct concerns (clause-level correctness versus cross-contract relationships), in which case separate independent passes better match each concern's actual scope." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "The decision to split review into independent passes should be driven by whether the concerns being checked are genuinely distinct in scope; when a single pass would need to hold both local, clause-level detail and broader cross-contract relationships in attention simultaneously, separating them into focused, independent passes tends to produce a more reliable result.",
+    "optionExplanations": {
+      "a": "Initial setup speed ignores the quality trade-off that actually matters: whether one pass can reliably cover both distinct concerns.",
+      "b": "The guidance directly supports independent multi-pass review as a valid, sometimes preferable, architecture, not something to avoid unconditionally.",
+      "c": "Scale is a relevant input to this decision in practice; dismissing it outright ignores how volume affects whether a single pass can meaningfully catch cross-contract issues.",
+      "d": "This identifies the substantive factor: whether combining the concerns dilutes attention, which is exactly when separate independent passes are worth the extra review architecture."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-tools", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 4 - review architecture"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "context-reliability-001",
+    "status": "reviewed",
+    "topic": "Preserving critical facts in structured state",
+    "difficulty": "Foundational",
+    "tags": ["context-management-reliability", "structured-state"],
+    "question": "A long-running customer support agent periodically compresses its conversation history into a progressive summary to save context. After several rounds of summarization, the agent forgets the customer's original order number even though it was mentioned early on. What is the best way to prevent this?",
+    "options": [
+      { "id": "a", "text": "Summarize more aggressively so future summaries are even shorter." },
+      { "id": "b", "text": "Keep critical identifiers like the order number in explicit structured state (separate from the prose summary) so they persist unchanged across summarization rounds, rather than depending on the summary to retain them." },
+      { "id": "c", "text": "Ask the customer to repeat the order number every single message." },
+      { "id": "d", "text": "Stop summarizing entirely and always keep the full raw transcript in context." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "Progressive summarization is lossy for exact operational facts even when it preserves the general gist. Keeping identifiers, dates, amounts, and other critical values in explicit structured state protects them from being paraphrased away or dropped during repeated compression.",
+    "optionExplanations": {
+      "a": "More aggressive summarization increases the risk of losing exact details like an order number, making the problem worse, not better.",
+      "b": "This matches the guidance directly: critical facts belong in structured state that survives summarization intact, not solely in prose that gets rewritten each round.",
+      "c": "Relying on the customer to repeat information is a workaround that does not fix the underlying state-management gap.",
+      "d": "Never summarizing avoids this particular loss but reintroduces unbounded context growth; structured state for critical facts solves the problem without that cost."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/how-claude-code-works", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 5 - structured state"],
+    "baseWeight": 1
+  },
+  {
+    "id": "context-reliability-002",
+    "status": "reviewed",
+    "topic": "Gist preservation versus exact fact preservation",
+    "difficulty": "Foundational",
+    "tags": ["context-management-reliability", "structured-state"],
+    "question": "A developer reviews a conversation summary and confirms it correctly describes the overall situation (\"customer had a billing dispute that got resolved\"). They conclude the summary is safe to rely on for every downstream detail, including the exact refund amount. What is the flaw in this reasoning?",
+    "options": [
+      { "id": "a", "text": "Summaries are never reliable for anything, including the general gist of a conversation." },
+      { "id": "b", "text": "There is no flaw; a summary that captures the gist correctly always preserves every specific number and identifier as well." },
+      { "id": "c", "text": "A summary that correctly captures the general gist of a situation does not guarantee it preserved every exact operational fact, such as a specific dollar amount, which can be paraphrased or dropped even when the overall narrative remains accurate." },
+      { "id": "d", "text": "The refund amount is not important information and does not need separate verification." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "Gist accuracy and exact-fact accuracy are different properties. A summary can correctly convey what happened in general terms while still losing or altering a specific figure, so exact operational facts need their own preservation mechanism rather than being inferred from a gist-level summary.",
+    "optionExplanations": {
+      "a": "The scenario does not call summaries useless overall, only unreliable as the sole source for exact operational facts.",
+      "b": "This is exactly the misconception being tested; gist accuracy does not guarantee exact-fact accuracy.",
+      "c": "This correctly separates the two properties: narrative accuracy does not entail preservation of every specific number or identifier.",
+      "d": "A refund amount is precisely the kind of critical fact that matters and should not be assumed correct without verification."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/how-claude-code-works", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 5 - common misconceptions"],
+    "baseWeight": 1
+  },
+  {
+    "id": "context-reliability-003",
+    "status": "reviewed",
+    "topic": "Trimming and organizing verbose tool results",
+    "difficulty": "Intermediate",
+    "tags": ["context-management-reliability", "context-trimming"],
+    "question": "A research agent calls a search tool that returns a huge JSON payload per result, including internal ranking metadata, raw HTML, and tracking fields that are never used downstream. What is the best way to handle this before it re-enters the model's context?",
+    "options": [
+      { "id": "a", "text": "Convert the payload to a single unbroken block of text with no structure to save formatting overhead." },
+      { "id": "b", "text": "Forward the entire raw payload every time, since keeping more context is always safer." },
+      { "id": "c", "text": "Discard the tool result entirely and proceed without any of the retrieved information." },
+      { "id": "d", "text": "Trim the payload down to the fields actually needed (title, summary, source URL) and present them in an organized, clearly sectioned form, rather than forwarding the entire raw response." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "Trimming irrelevant fields and organizing what remains into clear sections keeps the model's context focused on what is actually useful, avoiding the cost and dilution of unused metadata while still preserving the information the task needs.",
+    "optionExplanations": {
+      "a": "Removing structure entirely makes the retained information harder to parse and use, even if the volume is unchanged.",
+      "b": "Forwarding the entire raw payload wastes context on unused metadata and can crowd out attention on the fields that actually matter.",
+      "c": "Discarding the result entirely loses genuinely useful information (title, summary, source) along with the unwanted metadata.",
+      "d": "This matches the guidance to trim irrelevant fields and organize long inputs with clear sections, keeping only what is useful."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/how-claude-code-works", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 5 - context trimming"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "context-reliability-004",
+    "status": "reviewed",
+    "topic": "Unbounded raw payload forwarding",
+    "difficulty": "Intermediate",
+    "tags": ["context-management-reliability", "context-trimming"],
+    "question": "An engineer configures an agent to always forward the complete, unfiltered output of every tool call into the model's context, reasoning that \"more context is always better.\" Over a long session, what problem does this cause?",
+    "options": [
+      { "id": "a", "text": "No problem; unlimited raw context always improves the agent's performance regardless of relevance." },
+      { "id": "b", "text": "Accumulating large volumes of mostly irrelevant raw tool output consumes context capacity and can dilute the model's attention on the details that actually matter, rather than improving results." },
+      { "id": "c", "text": "Tool outputs are always small enough that this practice never causes any issue." },
+      { "id": "d", "text": "This approach is fine as long as the session lasts fewer than five turns." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "Context capacity is finite, and unfiltered verbose tool output accumulates quickly in a long session. Treating more raw context as inherently better ignores that irrelevant volume can crowd out and dilute attention on the information that actually matters.",
+    "optionExplanations": {
+      "a": "More raw context is not unconditionally better; irrelevant volume has a real cost in capacity and attention dilution.",
+      "b": "This correctly identifies the failure mode: unfiltered accumulation consumes capacity and can bury the details that matter.",
+      "c": "Tool outputs, especially from search or logging tools, can be very large, and this practice does not scale safely across a long session.",
+      "d": "The problem scales with the length and verbosity of the session; a short session limit is not the underlying fix and is an arbitrary cutoff."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/how-claude-code-works", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 5 - common misconceptions"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "context-reliability-005",
+    "status": "reviewed",
+    "topic": "Escalating on explicit human request",
+    "difficulty": "Foundational",
+    "tags": ["context-management-reliability", "escalation"],
+    "question": "During an automated workflow, a customer explicitly types \"I want to speak to a human representative, not a bot.\" What is the correct response?",
+    "options": [
+      { "id": "a", "text": "Continue the automated workflow as before, since the underlying issue may still be resolvable without a human." },
+      { "id": "b", "text": "Escalate to a human, since an explicit request for human assistance is one of the clearest triggers for escalation." },
+      { "id": "c", "text": "Ask the customer to restate the request three more times before considering escalation." },
+      { "id": "d", "text": "Ignore the request and proceed to close the ticket as resolved." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "An explicit human request is one of the clearest, most direct escalation triggers. Continuing to insist on automated handling after such a request disregards the customer's stated preference regardless of whether the issue is technically resolvable by the agent.",
+    "optionExplanations": {
+      "a": "Whether the issue is technically resolvable does not override an explicit, stated preference for human assistance.",
+      "b": "This matches the guidance directly: escalate on explicit human requests, which is one of the clearest escalation triggers.",
+      "c": "Repeating the request multiple times before honoring it disregards a request that was already unambiguous the first time.",
+      "d": "Closing the ticket without addressing the explicit request ignores the customer's stated preference entirely."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/reduce-hallucinations", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 5 - escalation"],
+    "baseWeight": 1
+  },
+  {
+    "id": "context-reliability-006",
+    "status": "reviewed",
+    "topic": "Escalating on policy gaps",
+    "difficulty": "Foundational",
+    "tags": ["context-management-reliability", "escalation"],
+    "question": "A support agent encounters a refund request that falls into a case the written policy documentation never addresses (a partially-used, non-returnable item damaged in transit). What is the appropriate action?",
+    "options": [
+      { "id": "a", "text": "Deny the refund automatically, since undocumented cases should default to the most conservative outcome without review." },
+      { "id": "b", "text": "Apply the closest-sounding policy rule as if it clearly applied, even though it does not actually address this situation." },
+      { "id": "c", "text": "Escalate the case for human policy guidance, since the documented policy does not cover this situation and guessing at an answer risks an incorrect resolution." },
+      { "id": "d", "text": "Approve the refund automatically, since undocumented cases should default to the most generous outcome without review." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "When the written policy simply does not address a situation, that is a policy gap, and escalation is the appropriate response rather than guessing at an outcome via an ill-fitting analogy or an arbitrary default.",
+    "optionExplanations": {
+      "a": "A default-deny outcome for an undocumented case is still a guess dressed up as policy, without any actual basis in written guidance.",
+      "b": "Applying a rule that does not actually cover the situation risks an incorrect outcome dressed up as policy-compliant.",
+      "c": "This matches the guidance to escalate on policy gaps, since neither approving nor denying is actually supported by documented policy here.",
+      "d": "A default-approve outcome is equally a guess with no basis in documented policy, just in the opposite direction."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/reduce-hallucinations", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 5 - escalation"],
+    "baseWeight": 1
+  },
+  {
+    "id": "context-reliability-007",
+    "status": "reviewed",
+    "topic": "Escalating when unable to make progress",
+    "difficulty": "Intermediate",
+    "tags": ["context-management-reliability", "escalation"],
+    "question": "An agent has attempted three different approaches to resolve a data-import error and each has failed for a different underlying reason, with no remaining approach apparent from the available tools and documentation. What should the agent do next?",
+    "options": [
+      { "id": "a", "text": "Silently abandon the task with no explanation to the user." },
+      { "id": "b", "text": "Keep retrying the same three approaches repeatedly in case one eventually succeeds by chance." },
+      { "id": "c", "text": "Report success anyway, since three attempts is generally considered sufficient effort." },
+      { "id": "d", "text": "Escalate with a summary of what was tried, why each attempt failed, and why no further automated approach appears available, rather than continuing to attempt unlikely fixes indefinitely." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "Genuine inability to make progress, after distinct approaches have been tried and exhausted, is an escalation trigger. A useful escalation includes what was attempted and why it failed, so a human has the context needed to decide the next step, rather than the agent looping indefinitely or giving up silently.",
+    "optionExplanations": {
+      "a": "Silently abandoning the task without any explanation leaves the user without the information needed to intervene or seek help elsewhere.",
+      "b": "Repeating approaches that have already failed for identified reasons is unlikely to newly succeed and wastes further effort without escalating the actual blocker.",
+      "c": "Reporting success when the task was not actually resolved misrepresents the outcome and denies the user accurate information.",
+      "d": "This matches the guidance to escalate on inability to make meaningful progress, with the context a human needs to act on it."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/reduce-hallucinations", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 5 - escalation"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "context-reliability-008",
+    "status": "reviewed",
+    "topic": "Clarifying ambiguous matches instead of guessing",
+    "difficulty": "Foundational",
+    "tags": ["context-management-reliability", "ambiguity-resolution"],
+    "question": "A customer support agent searches for a customer record by name and finds three different accounts with the same name and no other identifying detail provided yet. What is the best next step before taking any action on an account?",
+    "options": [
+      { "id": "a", "text": "Ask the customer for an additional identifier (such as an order number, email, or account ID) to resolve which of the three accounts is theirs, rather than guessing." },
+      { "id": "b", "text": "Pick whichever of the three accounts was most recently active, assuming that is most likely the correct one." },
+      { "id": "c", "text": "Pick the first account returned by the search, since search results are typically ordered by relevance." },
+      { "id": "d", "text": "Take the requested action on all three accounts simultaneously to be safe." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "When multiple plausible matches exist and nothing distinguishes them, guessing at one risks acting on the wrong account. Asking for an additional identifier resolves the ambiguity directly instead of relying on a heuristic guess.",
+    "optionExplanations": {
+      "a": "This matches the guidance to clarify multiple matches instead of guessing, using a concrete additional identifier to resolve the ambiguity.",
+      "b": "Recency of activity is a heuristic, not a genuine identifier; it does not reliably indicate which account actually belongs to this customer.",
+      "c": "Result ordering does not guarantee correctness; treating position as identity risks acting on the wrong account.",
+      "d": "Acting on all three accounts is far riskier than any single guess, since it can affect two unrelated customers who happen to share a name."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/reduce-hallucinations", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 5 - common misconceptions"],
+    "baseWeight": 1
+  },
+  {
+    "id": "context-reliability-009",
+    "status": "reviewed",
+    "topic": "Sentiment and self-confidence as a complexity proxy",
+    "difficulty": "Intermediate",
+    "tags": ["context-management-reliability", "escalation"],
+    "question": "A workflow decides whether to escalate a case to a human based solely on whether the agent's own generated response \"sounds confident\" and the customer's message \"sounds calm.\" A customer with a calmly worded but factually complex billing dispute is never escalated, and the case is later found to have been mishandled. What is the flaw in this escalation design?",
+    "options": [
+      { "id": "a", "text": "There is no flaw; a calm tone and a confident-sounding response reliably indicate the case was handled correctly." },
+      { "id": "b", "text": "Sentiment and self-reported or apparent confidence are not reliable proxies for actual task complexity or correctness, so escalation decisions should be based on the substance of the case rather than tone alone." },
+      { "id": "c", "text": "The problem is that the customer was too calm, and escalation should instead trigger only on angry-sounding messages." },
+      { "id": "d", "text": "The agent's response should have been made to sound less confident, regardless of the actual case content." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "Tone (of either the customer's message or the agent's response) does not reliably track whether a case is actually complex or whether the response is actually correct. Escalation criteria calibrated on sentiment or apparent confidence can miss genuinely difficult or high-risk cases that simply happen to be phrased calmly or answered with a confident tone.",
+    "optionExplanations": {
+      "a": "This is precisely the misconception being tested; a calm tone and confident phrasing do not guarantee a case was handled correctly.",
+      "b": "This correctly identifies the flaw: tone and self-confidence are uncalibrated signals that do not track actual complexity or correctness.",
+      "c": "Triggering only on anger just swaps one uncalibrated tone signal for another; it does not address the underlying reliance on sentiment rather than substance.",
+      "d": "Adjusting how confident the response sounds does not change whether the underlying handling was actually correct; it only changes surface tone."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/reduce-hallucinations", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 5 - common misconceptions"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "context-reliability-010",
+    "status": "reviewed",
+    "topic": "Propagating useful failure information",
+    "difficulty": "Intermediate",
+    "tags": ["context-management-reliability", "failure-propagation"],
+    "question": "A tool call to update a shipping address fails partway through: the street address updated successfully, but the postal-code update was rejected by a downstream validation service. What information should be propagated about this failure?",
+    "options": [
+      { "id": "a", "text": "A message reporting the entire update as successful, since the street address portion did complete." },
+      { "id": "b", "text": "A generic \"update failed\" message with no further detail, since any detail beyond pass/fail is unnecessary." },
+      { "id": "c", "text": "The failure type (validation rejection), the specific action attempted, the partial result (street address updated, postal code not), and any available alternative next step, so the caller has an accurate picture of what did and did not happen." },
+      { "id": "d", "text": "Silence, with no report of any kind, since partial failures are not worth communicating." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "A partial failure carries more useful information than a bare success/failure flag: knowing the failure type, what was attempted, what actually succeeded, and what alternatives exist lets the caller (human or agent) make an informed decision about what to do next.",
+    "optionExplanations": {
+      "a": "Reporting full success is inaccurate and would leave the postal-code error completely unaddressed and unknown to the caller.",
+      "b": "A bare \"failed\" message discards the useful detail that part of the update actually succeeded, which matters for deciding what to do next.",
+      "c": "This matches the guidance to propagate failure type, attempted action, partial results, and alternatives, giving the caller an accurate, actionable picture.",
+      "d": "Not reporting anything hides both the partial success and the failure, leaving the caller unable to act on either."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/how-claude-code-works", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 5 - failure propagation"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "context-reliability-011",
+    "status": "reviewed",
+    "topic": "Distinguishing timeouts from valid empty results",
+    "difficulty": "Foundational",
+    "tags": ["context-management-reliability", "failure-propagation"],
+    "question": "A search tool call for a specific customer's order history times out with no response, and separately, a search for a different customer returns successfully with zero matching orders. An agent treats both cases identically as \"no orders found.\" What is wrong with this?",
+    "options": [
+      { "id": "a", "text": "The timeout should be treated as proof the customer definitely has no order history." },
+      { "id": "b", "text": "Nothing is wrong; a timeout and a zero-result search both mean the same thing in every case." },
+      { "id": "c", "text": "The zero-result search should be treated as a system failure, since finding nothing is always suspicious." },
+      { "id": "d", "text": "A timeout is an access/communication failure where the true answer is unknown, while a successful search returning zero results is a confirmed, valid answer; treating them the same conflates \"we don't know\" with \"we checked and there are none.\"" }
+    ],
+    "correctOptionId": "d",
+    "explanation": "A timeout means the system could not determine an answer at all, whereas a successful search with zero results is a confirmed answer that there is nothing to find. Collapsing these into the same \"no orders\" conclusion can lead to incorrectly telling a customer they have no history when the system simply never got an answer.",
+    "optionExplanations": {
+      "a": "A timeout provides no information about the customer's actual order history; treating it as proof of anything specific is unsupported.",
+      "b": "Treating the two as equivalent is exactly the flawed assumption the scenario illustrates; they carry very different information.",
+      "c": "A successful, confirmed zero-result search is a normal valid outcome, not inherently suspicious.",
+      "d": "This correctly distinguishes an unknown/failed check from a confirmed empty result, which is the key distinction the scenario tests."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/how-claude-code-works", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 5 - common misconceptions"],
+    "baseWeight": 1
+  },
+  {
+    "id": "context-reliability-012",
+    "status": "reviewed",
+    "topic": "Isolating exploratory work with subagents and scratch state",
+    "difficulty": "Advanced",
+    "tags": ["context-management-reliability", "context-isolation"],
+    "question": "An agent investigating a data-quality issue needs to explore dozens of files and try several dead-end hypotheses before finding the root cause. The team wants this exploration to be resumable if it is interrupted, without cluttering the main task's context with every dead end. What is the best approach?",
+    "options": [
+      { "id": "a", "text": "Run the exploration in a subagent that persists its findings and progress to scratch/state artifacts as it goes, allowing recovery and resumption, while the main session receives only the distilled conclusion." },
+      { "id": "b", "text": "Run the exploration directly in the main session with no separation, so nothing needs to be persisted separately." },
+      { "id": "c", "text": "Avoid persisting any intermediate state, since restarting from scratch after an interruption is always simpler." },
+      { "id": "d", "text": "Persist every dead-end hypothesis directly into the main session's context so nothing is ever lost." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "Isolating verbose, exploratory work in a subagent keeps the main session's context focused, and persisting scratch/state artifacts during that exploration allows the work to be recovered or resumed if interrupted, without requiring the main session to hold onto every dead end.",
+    "optionExplanations": {
+      "a": "This matches the guidance to use subagents and scratch/state artifacts to isolate exploration and enable recovery, keeping the main session focused.",
+      "b": "Running the exploration directly in the main session reintroduces the exact clutter problem the team wants to avoid.",
+      "c": "Restarting from scratch after every interruption discards potentially expensive exploratory work and progress unnecessarily.",
+      "d": "Persisting every dead end into the main session directly defeats the goal of keeping that context focused and free of exploratory noise."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/how-claude-code-works", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 5 - context isolation"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "context-reliability-013",
+    "status": "reviewed",
+    "topic": "Recovering exploratory work via persisted state",
+    "difficulty": "Advanced",
+    "tags": ["context-management-reliability", "context-isolation"],
+    "question": "A long exploratory investigation into a performance regression is interrupted midway (session crash) after already ruling out several possible causes. Because the investigating subagent had been writing its ruled-out hypotheses and current findings to a scratch state file as it went, the work can resume from where it left off. What does this scenario best illustrate?",
+    "options": [
+      { "id": "a", "text": "That persisting intermediate state is unnecessary busywork with no practical benefit." },
+      { "id": "b", "text": "That persisting intermediate exploratory state as work progresses enables recovery after an interruption, instead of losing all prior progress and starting over." },
+      { "id": "c", "text": "That subagents are incapable of resuming any interrupted work under any circumstances." },
+      { "id": "d", "text": "That the crash proves scratch-state persistence introduces more risk than it prevents." }
+    ],
+    "correctOptionId": "b",
+    "explanation": "This is exactly the value of persisting scratch/state artifacts during exploratory work: when an interruption occurs, the already-established findings and ruled-out paths are not lost, and the investigation can resume rather than repeat prior effort.",
+    "optionExplanations": {
+      "a": "The scenario demonstrates a concrete, practical benefit of persisting state, directly contradicting the claim that it is unnecessary.",
+      "b": "This correctly identifies the benefit demonstrated: persisted state allowed recovery and resumption instead of starting from zero.",
+      "c": "The scenario shows the opposite: the subagent's work was in fact resumable specifically because of the persisted state.",
+      "d": "The interruption was recovered from cleanly precisely because of the persisted state; the crash does not indicate the persistence itself was risky."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/how-claude-code-works", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 5 - context isolation"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "context-reliability-014",
+    "status": "reviewed",
+    "topic": "Segmenting evaluation by field and document type",
+    "difficulty": "Advanced",
+    "tags": ["context-management-reliability", "evaluation-calibration"],
+    "question": "An extraction system reports 96% overall accuracy across all fields and document types combined. A closer look shows that accuracy on the `total_amount` field for handwritten invoices is only 61%, while accuracy on cleanly formatted digital invoices is above 99%. What does this indicate about the original 96% figure?",
+    "options": [
+      { "id": "a", "text": "The handwritten-invoice figure must be a measurement error, since the overall accuracy is high." },
+      { "id": "b", "text": "The 96% figure is fully sufficient on its own and no further breakdown is needed." },
+      { "id": "c", "text": "The aggregate figure masks a significant, actionable weakness in a specific field and document-type combination; evaluation should be segmented by field and document type to surface exactly this kind of gap." },
+      { "id": "d", "text": "Segmented accuracy figures are less trustworthy than a single overall number." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "A single blended accuracy number can hide large disparities between specific segments. Segmenting evaluation by field and document type reveals exactly this kind of gap, which is invisible in the aggregate figure but important for deciding where the system actually needs improvement or human review.",
+    "optionExplanations": {
+      "a": "There is no basis to dismiss the segmented figure as an error; it is a legitimate finding that the aggregate simply averaged away.",
+      "b": "Relying only on the aggregate figure would leave the handwritten-invoice weakness completely unaddressed and unnoticed.",
+      "c": "This correctly identifies why segmentation matters: it surfaces a real, specific weakness the aggregate number conceals.",
+      "d": "Segmented figures are generally more informative for identifying specific weaknesses, not less trustworthy than a single blended number."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/test-and-evaluate/eval-tool", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 5 - evaluation calibration"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "context-reliability-015",
+    "status": "reviewed",
+    "topic": "Trusting aggregate accuracy without segmentation",
+    "difficulty": "Advanced",
+    "tags": ["context-management-reliability", "evaluation-calibration"],
+    "question": "A team decides to skip any segment-level analysis because their extraction pipeline's overall accuracy metric is high, reasoning that \"a high aggregate number is proof the system works well everywhere.\" What is the risk in this reasoning?",
+    "options": [
+      { "id": "a", "text": "Aggregate accuracy is calculated differently for every system, so this concern never applies to extraction pipelines specifically." },
+      { "id": "b", "text": "There is no risk; a high aggregate number always means every segment performs equally well." },
+      { "id": "c", "text": "The risk only applies to systems with fewer than a thousand evaluated samples." },
+      { "id": "d", "text": "A high aggregate accuracy number can still conceal specific segments, fields, or document types with much lower performance, so it is not proof of uniformly good performance across every case." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "An aggregate metric is a weighted average across everything evaluated; it can stay high even while a specific, less-frequent segment performs poorly, since that segment's errors get diluted by the volume of easier cases. Calibrating trust on the aggregate number alone risks missing exactly those weak segments.",
+    "optionExplanations": {
+      "a": "The underlying dilution risk from averaging across segments is general and applies to extraction pipelines like any other evaluated system.",
+      "b": "This is precisely the flawed assumption being tested; a high aggregate does not imply uniform per-segment performance.",
+      "c": "The risk of dilution by aggregation applies regardless of sample count; it is about how segments of different sizes and difficulty are averaged together.",
+      "d": "This correctly names the risk: a high blended number does not guarantee uniform performance across every segment."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/test-and-evaluate/eval-tool", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 5 - common misconceptions"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "context-reliability-016",
+    "status": "reviewed",
+    "topic": "Sampling high-confidence outputs for hidden errors",
+    "difficulty": "Advanced",
+    "tags": ["context-management-reliability", "evaluation-calibration"],
+    "question": "A classification system marks each output with a confidence score, and the team only manually reviews low-confidence outputs, assuming high-confidence outputs are always correct. What gap does this review strategy leave unaddressed?",
+    "options": [
+      { "id": "a", "text": "It leaves unaddressed the possibility of confidently wrong outputs; sampling a portion of high-confidence outputs for review is needed to catch errors the confidence score itself does not flag." },
+      { "id": "b", "text": "There is no gap; a high confidence score is always a guarantee of correctness." },
+      { "id": "c", "text": "The gap only matters if the low-confidence review queue is empty." },
+      { "id": "d", "text": "The gap is fully addressed as long as the confidence threshold is set high enough." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "Confidence scores are not a perfect proxy for correctness; a model can be confidently wrong. Reviewing only low-confidence outputs misses that failure mode entirely, so sampling some high-confidence outputs for review is necessary to surface hidden errors the confidence signal does not catch.",
+    "optionExplanations": {
+      "a": "This correctly identifies the gap: confidently wrong outputs are invisible to a review strategy that only checks low-confidence cases.",
+      "b": "Treating high confidence as a guarantee of correctness is exactly the assumption that creates the blind spot.",
+      "c": "The gap concerns high-confidence outputs specifically and exists regardless of how many items are in the low-confidence queue.",
+      "d": "Raising the confidence threshold changes which outputs are labeled high-confidence, but does not make the model's confidence assessment itself infallible."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/test-and-evaluate/eval-tool", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 5 - evaluation calibration"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "context-reliability-017",
+    "status": "reviewed",
+    "topic": "Preserving provenance during synthesis",
+    "difficulty": "Intermediate",
+    "tags": ["context-management-reliability", "provenance"],
+    "question": "A research agent synthesizes a final report from five different source documents, each with its own publication date. What should the synthesis preserve to remain trustworthy and auditable?",
+    "options": [
+      { "id": "a", "text": "A single combined citation listing all five sources at the end, with no indication of which claim came from which source." },
+      { "id": "b", "text": "Only the final synthesized text, with no reference back to which source or date supports any specific claim." },
+      { "id": "c", "text": "A claim-to-source mapping and timestamps for each incorporated fact, so any claim in the report can be traced back to which document it came from and when that document was published." },
+      { "id": "d", "text": "The most recent source's date applied uniformly to every claim in the report, regardless of which document it actually came from." }
+    ],
+    "correctOptionId": "c",
+    "explanation": "Preserving claim-source links and timestamps throughout synthesis lets any specific claim in the final report be traced back to its origin and its currency, which is essential for auditing accuracy and catching outdated or unsupported statements.",
+    "optionExplanations": {
+      "a": "A single undifferentiated citation list does not indicate which specific claim relies on which specific source, undermining traceability.",
+      "b": "Dropping all source and date references makes it impossible to verify or audit any individual claim in the resulting report.",
+      "c": "This matches the guidance to preserve claim-source links and timestamps across synthesis, keeping the report auditable.",
+      "d": "Applying one source's date to every claim misrepresents the actual currency of claims drawn from older documents."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/reduce-hallucinations", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 5 - provenance"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "context-reliability-018",
+    "status": "reviewed",
+    "topic": "Handling conflicting evidence across sources",
+    "difficulty": "Advanced",
+    "tags": ["context-management-reliability", "provenance"],
+    "question": "Two credible source documents report different figures for the same statistic, one dated last year and one dated this year, with no clear indication which is authoritative. What is the best way to handle this in a synthesized report?",
+    "options": [
+      { "id": "a", "text": "Average the two figures together and present the average as a single authoritative value." },
+      { "id": "b", "text": "Silently choose the more recent figure and present it as the only value, without mentioning that an older source disagreed." },
+      { "id": "c", "text": "Silently choose the figure that seems more plausible on its face, without recording that a conflict existed." },
+      { "id": "d", "text": "Report both figures with their respective sources and dates, and annotate the conflict explicitly, rather than silently picking one value as if there were no disagreement." }
+    ],
+    "correctOptionId": "d",
+    "explanation": "When two credible sources conflict and neither is clearly authoritative, preserving both values along with their attribution and an explicit conflict annotation gives the reader the information needed to judge the discrepancy themselves, rather than the synthesis quietly resolving it in a way that could be wrong.",
+    "optionExplanations": {
+      "a": "Averaging two disputed figures manufactures a new number that neither source actually reported and obscures the real disagreement.",
+      "b": "Recency is a plausible heuristic but is not guaranteed to be correct, and silently dropping the disagreement hides useful information from the reader.",
+      "c": "Choosing based on perceived plausibility without recording the conflict risks an unjustified selection presented as settled fact.",
+      "d": "This matches the guidance to preserve conflict annotations and attribution rather than silently resolving disagreements between credible sources."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/reduce-hallucinations", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 5 - common misconceptions"],
+    "baseWeight": 1.2
+  },
+  {
+    "id": "context-reliability-019",
+    "status": "reviewed",
+    "topic": "Tracking coverage gaps in multi-source synthesis",
+    "difficulty": "Intermediate",
+    "tags": ["context-management-reliability", "provenance"],
+    "question": "While synthesizing a report from ten source documents, an agent finds that two of the ten could not be retrieved successfully. What should the final report do about this?",
+    "options": [
+      { "id": "a", "text": "Note explicitly which two sources could not be retrieved and that the synthesis is based on the remaining eight, so readers understand the coverage gap rather than assuming the report reflects all ten." },
+      { "id": "b", "text": "Present the report as a complete synthesis of all ten sources without mentioning the two that failed." },
+      { "id": "c", "text": "Discard the entire synthesis because two out of ten sources were unavailable." },
+      { "id": "d", "text": "Silently substitute the agent's own general knowledge in place of the two missing sources, without noting the substitution." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "A synthesis built on incomplete coverage should say so explicitly. Noting which sources were unavailable and that conclusions rest on a subset preserves an honest picture of coverage, rather than implying a completeness the report does not actually have.",
+    "optionExplanations": {
+      "a": "This matches the guidance to preserve and disclose coverage gaps, so readers know the actual scope of the synthesis.",
+      "b": "Presenting the report as complete when two sources were missing misrepresents its actual coverage.",
+      "c": "Discarding a synthesis over a partial coverage gap wastes the genuinely useful information the eight retrieved sources provide.",
+      "d": "Silently substituting unverified general knowledge for a missing source, without disclosure, introduces unattributed and unverifiable claims into what should be a sourced synthesis."
+    },
+    "sourceReferences": ["https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/reduce-hallucinations", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 5 - provenance"],
+    "baseWeight": 1.1
+  },
+  {
+    "id": "context-reliability-020",
+    "status": "reviewed",
+    "topic": "Diagnosing context loss in a long-running session",
+    "difficulty": "Intermediate",
+    "tags": ["context-management-reliability", "structured-state"],
+    "question": "In a multi-hour coding session, an agent correctly remembers the general goal of a refactor but has lost track of a specific constraint the user stated early on (\"never touch the legacy billing module\") and edits that module anyway. What is the most likely root cause?",
+    "options": [
+      { "id": "a", "text": "The constraint was only held in prose conversation history, and progressive context compression lost the specific detail even while the general goal survived, rather than being kept in explicit, persistent structured state." },
+      { "id": "b", "text": "The agent deliberately chose to override the constraint because it disagreed with it." },
+      { "id": "c", "text": "Constraints stated early in a session are automatically discarded after a fixed number of turns regardless of how context is managed." },
+      { "id": "d", "text": "The legacy billing module must not actually exist in the codebase, since the agent edited it." }
+    ],
+    "correctOptionId": "a",
+    "explanation": "This is a textbook case of losing an exact operational constraint during progressive summarization while the general narrative (the refactor's goal) survives. The fix is to keep hard constraints in explicit, persistent structured state rather than relying on them to survive repeated compression of conversation history.",
+    "optionExplanations": {
+      "a": "This correctly identifies the mechanism: gist preservation without exact-constraint preservation, exactly the kind of loss structured state is meant to prevent.",
+      "b": "Nothing in the scenario indicates a deliberate override; the more direct and common explanation is unintentional loss of the detail during context management.",
+      "c": "There is no fixed universal turn-count rule for discarding constraints; loss occurs from how context is managed, not an automatic expiration.",
+      "d": "The module clearly exists, since the agent edited it; its existence is not in question, only whether the constraint about it was retained."
+    },
+    "sourceReferences": ["https://code.claude.com/docs/en/how-claude-code-works", "docs/CLAUDE_CERTIFIED_ARCHITECT_QUESTION_GUIDE.md, Domain 5 - structured state"],
+    "baseWeight": 1.1
   }
 ]

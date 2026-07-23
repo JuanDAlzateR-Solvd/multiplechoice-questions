@@ -39,4 +39,4 @@ Data flow: `main.ts` fetches `public/questions.json` → `validateQuestions` (`s
 
 Only `main.ts` and `render.ts` should ever touch the DOM or `fetch`; selection, progress math, and session transitions must stay pure functions so they remain testable without a browser (see `tests/unit/`). `tests/e2e/quiz.spec.ts` is the only place that exercises the real UI, storage, and reload persistence together, using a Pixel 5 profile.
 
-Sample question data intentionally uses option `b` as the correct answer throughout — e2e assertions depend on this; don't change it incidentally.
+The e2e test resolves the correct option dynamically from the fetched question bank (matching the displayed question stem, then reading its `correctOptionId`) rather than assuming a fixed letter — the full bank intentionally varies correct-answer letters, so no question's correct-option position is load-bearing for tests.
