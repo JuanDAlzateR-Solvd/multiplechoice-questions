@@ -100,7 +100,7 @@ When changing behavior:
 
 - Add or update focused Vitest coverage for validation, selection, progress, or session logic.
 - Update the Playwright test when the primary user flow changes.
-- Keep end-to-end assumptions deterministic. The current sample questions intentionally use option `b` as the correct answer.
+- Keep end-to-end assumptions deterministic. `tests/e2e/quiz.spec.ts` resolves the correct option dynamically by fetching `questions.json` and matching the displayed question, so it does not depend on any question's correct-option letter — new questions do not need to use a specific letter for e2e purposes.
 - Update `README.md` when setup, scripts, schema, selection behavior, storage, or deployment guidance changes.
 
 Before handing off:
